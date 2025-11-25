@@ -1,0 +1,199 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+/* 
+  ---break---
+*/
+@custom-variant dark (&:is(.dark *));
+
+/* 
+  primary colors: #F3EEE7, #2A3B26
+  font colors: #18181B, #52525B 
+  card outline: #E4E4E7
+  miscellaneous component colors: #CCCCCC, #8B8B8D, #F9F9FA
+*/
+
+:root {
+
+  /* Font colors */
+  --text-primary: #18181B;
+  --text-secondary: #52525B;
+
+  /* Card and borders */
+  --card-outline: #E4E4E7;
+
+  /* Miscellaneous */
+  --misc-light: #F9F9FA;
+  --misc-medium: #CCCCCC;
+  --misc-dark: #8B8B8D;
+
+  /* Font family */
+  --font-national-park: "National Park", sans-serif;
+  --radius: 0.625rem;
+  
+  /* Updated theme colors to match your palette */
+  --background: #F3EEE7; /* Warm beige background */
+  --foreground: #18181B; /* Primary text color */
+  
+  --card: #FFFFFF; /* White cards on beige background */
+  --card-foreground: #18181B;
+  
+  --popover: #FFFFFF;
+  --popover-foreground: #18181B;
+  
+  --primary: #2A3B26; /* Dark green primary */
+  --primary-foreground: #F3EEE7; /* Beige text on green */
+  
+  --secondary: #F9F9FA; /* Light gray secondary */
+  --secondary-foreground: #18181B;
+  
+  --muted: #F9F9FA;
+  --muted-foreground: #52525B; /* Secondary text color */
+  
+  --accent: #2A3B26; /* Dark green accent */
+  --accent-foreground: #F3EEE7;
+  
+  --destructive: oklch(0.577 0.245 27.325); /* Keep original red for errors */
+  
+  --border: #E4E4E7; /* Card outline color */
+  --input: #E4E4E7;
+  --ring: #2A3B26; /* Focus ring uses primary green */
+  
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #18181B;
+  --sidebar-primary: #2A3B26;
+  --sidebar-primary-foreground: #F3EEE7;
+  --sidebar-accent: #F9F9FA;
+  --sidebar-accent-foreground: #18181B;
+  --sidebar-border: #E4E4E7;
+  --sidebar-ring: #2A3B26;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-card-outline: var(--card-outline);
+  --color-misc-light: var(--misc-light);
+  --color-misc-medium: var(--misc-medium);
+  --color-misc-dark: var(--misc-dark);
+
+  --font-sans: var(--font-national-park);
+  --font-mono: var(--font-geist-mono);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text-primary: #ededed;
+    --text-secondary: #a1a1aa;
+    --card-outline: #27272a;
+    --misc-light: #1a1a1a;
+    --misc-medium: #3f3f46;
+    --misc-dark: #71717a;
+  }
+}
+
+body {
+  color: var(--text-primary);
+  font-family: var(--font-national-park);
+}
+
+/* 
+  ---break---
+*/
+
+.dark {
+  --background: #18181B; /* Dark background using primary text color */
+  --foreground: #F3EEE7; /* Beige text on dark */
+  
+  --card: #27272a; /* Dark card */
+  --card-foreground: #F3EEE7;
+  
+  --popover: #27272a;
+  --popover-foreground: #F3EEE7;
+  
+  --primary: #F3EEE7; /* Inverted - beige primary on dark */
+  --primary-foreground: #2A3B26; /* Dark green text */
+  
+  --secondary: #3f3f46;
+  --secondary-foreground: #F3EEE7;
+  
+  --muted: #3f3f46;
+  --muted-foreground: #a1a1aa;
+  
+  --accent: #2A3B26; /* Keep green accent in dark mode */
+  --accent-foreground: #F3EEE7;
+  
+  --destructive: oklch(0.704 0.191 22.216);
+  
+  --border: #3f3f46;
+  --input: #3f3f46;
+  --ring: #F3EEE7;
+  
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  
+  --sidebar: #27272a;
+  --sidebar-foreground: #F3EEE7;
+  --sidebar-primary: #2A3B26;
+  --sidebar-primary-foreground: #F3EEE7;
+  --sidebar-accent: #3f3f46;
+  --sidebar-accent-foreground: #F3EEE7;
+  --sidebar-border: #3f3f46;
+  --sidebar-ring: #F3EEE7;
+}
+
+/* 
+  ---break---
+*/
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
