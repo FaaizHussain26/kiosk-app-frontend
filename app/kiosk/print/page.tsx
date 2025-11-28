@@ -36,7 +36,7 @@ export default function PrintPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Progress Steps - All Complete */}
-      <ProgressSteps index={0} />
+      <ProgressSteps currentStep={0} />
 
       {/* Main Content */}
       <div className="flex-1 flex items-center justify-center p-8">
