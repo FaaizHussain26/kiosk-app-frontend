@@ -1,71 +1,59 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
+import PostaFooter from "@/components/global/posta-footer";
 
 export default function Home() {
-  const router = useRouter()
-  const [sessionId] = useState(() => Math.random().toString(36).substr(2, 9))
+  const router = useRouter();
+  const [sessionId] = useState(() => Math.random().toString(36).substr(2, 9));
 
   const handleStart = () => {
-    // Navigate to QR display page with session ID
-    router.push(`/kiosk/qr?session=${sessionId}`)
-  }
+    router.push(`/kiosk/qr?session=${sessionId}`);
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br  flex items-center justify-center p-4">
-      <div className="w-full max-w-2xl">
-        {/* Hero Content */}
-        <div className="text-center mb-16">
-          <h1 className="text-5xl md:text-6xl font-bold text-emerald-900 mb-6 text-balance">
-            Upload Your Favorite Photo,
-            <span className="block">Personalize & Print!</span>
-          </h1>
-          <p className="text-lg text-emerald-700 mb-12 text-balance">
-            Create personalized photo prints in minutes. Just scan, upload, edit, and print!
-          </p>
-        </div>
+    <div className="h-screen w-full flex flex-col overflow-hidden bg-pattern bg-background">
+      {/* Main content */}
+      <div className="flex-1 flex flex-col items-center justify-center px-4">
+        {/* Hero */}
+        <h1 className="text-center mt-18 text-6xl font-bold text-primary leading-tight">
+          Upload Your Favorite Photo,
+          <span className="block m-0 p-0">Personalize & Print!</span>
+        </h1>
 
-        {/* Visual Section */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-8 mb-12">
-          {/* Left: Images */}
-          <div className="flex-1 flex justify-center">
-            <div className="relative w-48 h-64">
-              <div className="absolute left-0 top-8 transform -rotate-6">
-                <Image
-                  src="/images/post_card_1.png"
-                  alt="Sample photo 1"
-                  className="w-full h-full object-cover rounded-lg"
-                  width={635}
-                  height={635}
-                />
-              </div>
-            </div>
+        {/* Content Row */}
+        <div className="flex items-center justify-center max-w-7xl w-full">
+          {/* Left: Image (isolated container) */}
+          <div className="h-[635px] flex items-center justify-center">
+            <Image
+              src="/images/postcard_pic.png"
+              alt="Sample photos"
+              width={480}
+              height={480}
+              className="object-contain mb-8"
+            />
           </div>
 
-          {/* Right: Price & Button */}
-          <div className="flex-1 flex flex-col items-center justify-center">
-            <div className=" rounded-full w-40 h-40 flex flex-col items-center justify-center ">
+          {/* Right: Start Button & Price */}
+          <div className="flex flex-col items-center justify-center mb-25 ">
             <Image
               src="/images/start_button.png"
-              alt="Sample photo 1"
-              className="w-full h-full object-cover rounded-lg"
-              width={635}
+              alt="Start button"
+              width={460}
+              height={460}
+              className="object-contain cursor-pointer"
               onClick={handleStart}
-              height={635}
             />
-            </div>  
-            <p className="text-2xl font-bold text-emerald-900 mt-8">Price: $3.50</p>
+
+            <p className="text-4xl font-bold text-primary">Price: $3.50</p>
           </div>
         </div>
-
-        {/* Footer */}
-        <footer className="text-center text-sm text-emerald-700 mt-16 border-t border-emerald-300 pt-6">
-          <p>© 2025 Posta. All rights reserved.</p>
-          <p className="mt-2">Need help? Ask a staff member</p>
-        </footer>
       </div>
+
+      {/* Footer */}
+      <PostaFooter />
     </div>
-  )
+  );
 }
