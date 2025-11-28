@@ -1,41 +1,43 @@
-"use client"
+"use client";
 
-import { useSearchParams, useRouter } from "next/navigation"
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { CreditCard, DollarSign } from "lucide-react"
-import { ProgressSteps } from "@/components/global/progress-steps"
+import { useSearchParams, useRouter } from "next/navigation";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { CreditCard, DollarSign } from "lucide-react";
+import { ProgressSteps } from "@/components/global/progress-steps";
 
 export default function PaymentPage() {
-  const searchParams = useSearchParams()
-  const router = useRouter()
-  const sessionId = searchParams.get("session") || ""
-  const [isProcessing, setIsProcessing] = useState(false)
-  const [paymentMethod, setPaymentMethod] = useState<"card" | "cash">("card")
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const sessionId = searchParams.get("session") || "";
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<"card" | "cash">("card");
 
   const handlePayment = async () => {
-    setIsProcessing(true)
+    setIsProcessing(true);
 
     // Simulate payment processing
     setTimeout(() => {
-      console.log("[v0] Payment processed for session:", sessionId)
-      router.push(`/kiosk/print?session=${sessionId}`)
-    }, 2000)
-  }
+      console.log("[v0] Payment processed for session:", sessionId);
+      router.push(`/kiosk/print?session=${sessionId}`);
+    }, 2000);
+  };
 
   const handleBack = () => {
-    router.push(`/kiosk/review?session=${sessionId}`)
-  }
+    router.push(`/kiosk/review?session=${sessionId}`);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Progress Steps */}
-      <ProgressSteps index={5} />
-      
+      <ProgressSteps currentStep={5} />
+
       {/* Main Content */}
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-12">
-          <h2 className="text-3xl font-bold mb-8 text-center text-gray-900">Payment</h2>
+          <h2 className="text-3xl font-bold mb-8 text-center text-gray-900">
+            Payment
+          </h2>
 
           {/* Amount */}
           <div className="bg-emerald-50 rounded-lg p-6 mb-8 text-center">
@@ -58,7 +60,9 @@ export default function PaymentPage() {
                 className="w-4 h-4 text-emerald-700"
               />
               <CreditCard className="w-5 h-5 ml-3 text-emerald-700" />
-              <span className="ml-3 font-medium text-gray-900">Card Payment</span>
+              <span className="ml-3 font-medium text-gray-900">
+                Card Payment
+              </span>
             </label>
 
             <label className="flex items-center p-4 border-2 border-gray-300 rounded-lg cursor-pointer hover:border-gray-400">
@@ -71,7 +75,9 @@ export default function PaymentPage() {
                 className="w-4 h-4 text-gray-700"
               />
               <DollarSign className="w-5 h-5 ml-3 text-gray-700" />
-              <span className="ml-3 font-medium text-gray-900">Cash Payment</span>
+              <span className="ml-3 font-medium text-gray-900">
+                Cash Payment
+              </span>
             </label>
           </div>
 
@@ -86,7 +92,11 @@ export default function PaymentPage() {
 
           {/* Actions */}
           <div className="flex gap-4">
-            <Button onClick={handleBack} variant="outline" className="flex-1 bg-transparent">
+            <Button
+              onClick={handleBack}
+              variant="outline"
+              className="flex-1 bg-transparent"
+            >
               Back
             </Button>
             <Button
@@ -105,5 +115,5 @@ export default function PaymentPage() {
         <p>© 2025 Posta. All rights reserved.</p>
       </footer>
     </div>
-  )
+  );
 }
