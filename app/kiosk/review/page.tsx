@@ -1,39 +1,45 @@
-"use client"
+"use client";
 
-import { useSearchParams, useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { CheckCircle2 } from "lucide-react"
-import { ProgressSteps } from "@/components/global/progress-steps"
+import { useSearchParams, useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { CheckCircle2 } from "lucide-react";
+import { ProgressSteps } from "@/components/global/progress-steps";
 
 export default function ReviewPage() {
-  const searchParams = useSearchParams()
-  const router = useRouter()
-  const sessionId = searchParams.get("session") || ""
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const sessionId = searchParams.get("session") || "";
 
   const handleProceedToPayment = () => {
-    router.push(`/kiosk/payment?session=${sessionId}`)
-  }
+    router.push(`/kiosk/payment?session=${sessionId}`);
+  };
 
   const handleBack = () => {
-    router.push(`/kiosk/edit?session=${sessionId}`)
-  }
+    router.push(`/kiosk/edit?session=${sessionId}`);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Progress Steps */}
-      <ProgressSteps index={4} />
-      
+      <ProgressSteps currentStep={4} />
+
       {/* Main Content */}
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="max-w-2xl w-full bg-white rounded-lg shadow-lg p-12">
-          <h2 className="text-3xl font-bold mb-8 text-gray-900">Review Your Order</h2>
+          <h2 className="text-3xl font-bold mb-8 text-gray-900">
+            Review Your Order
+          </h2>
 
           <div className="grid md:grid-cols-2 gap-8">
             {/* Preview */}
             <div>
               <p className="text-sm font-medium text-gray-700 mb-4">Preview</p>
               <div className="bg-gray-200 rounded-lg overflow-hidden aspect-square">
-                <img src="/photo-postcard-preview.jpg" alt="Final preview" className="w-full h-full object-cover" />
+                <img
+                  src="/photo-postcard-preview.jpg"
+                  alt="Final preview"
+                  className="w-full h-full object-cover"
+                />
               </div>
             </div>
 
@@ -42,12 +48,16 @@ export default function ReviewPage() {
               <div className="space-y-6">
                 <div>
                   <p className="text-sm text-gray-600 mb-1">Product</p>
-                  <p className="text-lg font-semibold text-gray-900">Personalized Postcard</p>
+                  <p className="text-lg font-semibold text-gray-900">
+                    Personalized Postcard
+                  </p>
                 </div>
 
                 <div>
                   <p className="text-sm text-gray-600 mb-1">Size</p>
-                  <p className="text-lg font-semibold text-gray-900">4x6 inches</p>
+                  <p className="text-lg font-semibold text-gray-900">
+                    4x6 inches
+                  </p>
                 </div>
 
                 <div>
@@ -70,10 +80,17 @@ export default function ReviewPage() {
 
           {/* Actions */}
           <div className="flex gap-4 mt-12">
-            <Button onClick={handleBack} variant="outline" className="flex-1 bg-transparent">
+            <Button
+              onClick={handleBack}
+              variant="outline"
+              className="flex-1 bg-transparent"
+            >
               Back
             </Button>
-            <Button onClick={handleProceedToPayment} className="flex-1 bg-emerald-700 hover:bg-emerald-800">
+            <Button
+              onClick={handleProceedToPayment}
+              className="flex-1 bg-emerald-700 hover:bg-emerald-800"
+            >
               Proceed to Payment
             </Button>
           </div>
@@ -85,5 +102,5 @@ export default function ReviewPage() {
         <p>© 2025 Posta. All rights reserved.</p>
       </footer>
     </div>
-  )
+  );
 }
