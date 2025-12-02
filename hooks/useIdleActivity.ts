@@ -26,7 +26,7 @@ type UseIdleActivityOptions = {
  */
 const useIdleActivity = (
   callback: () => void,
-  { idleModalMs = 10_000, redirectMs = 10_000 }: UseIdleActivityOptions = {},
+  { idleModalMs = 90_000, redirectMs = 30_000 }: UseIdleActivityOptions = {},
 ) => {
   const [showModal, setShowModal] = useState(false);
 
