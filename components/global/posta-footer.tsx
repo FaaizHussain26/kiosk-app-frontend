@@ -4,7 +4,7 @@ const PostaFooter = () => {
   return (
     <footer className="fixed bottom-0 left-0 right-0 bg-primary py-4 px-6">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
-        <p className="text-primary-foreground/90 text-sm">
+        <p className="text-primary-foreground/90 text-sm ml-12">
           © 2025 Posta. All rights reserved.
         </p>
 
@@ -18,7 +18,7 @@ const PostaFooter = () => {
           />
         </div>
 
-        <p className="text-primary-foreground/90 text-sm">
+        <p className="text-primary-foreground/90 text-sm mr-12">
           Need help? Ask a staff member
         </p>
       </div>

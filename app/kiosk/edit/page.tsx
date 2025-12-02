@@ -126,16 +126,19 @@ export default function EditPage() {
                 {/* Front - Photo Side */}
                 <div
                   className="flip-card-front bg-card shadow-lg p-4 border border-border"
-                  style={{ width: "380px", height: "570px" }}
+                  style={{ width: "384px", height: "576px" }}
                 >
                   <div
                     className="w-full h-full overflow-hidden relative"
                     style={{ filter: combinedFilter }}
                   >
-                    <img
+                    <Image
                       src={imageUrl}
                       alt="Photo preview"
+                      width={384}
+                      height={576}
                       className="w-full h-full object-cover"
+                      unoptimized
                     />
                   </div>
                 </div>
@@ -143,14 +146,14 @@ export default function EditPage() {
                 {/* Back - Message Side */}
                 <div
                   className="flip-card-back bg-card shadow-lg border border-border"
-                  style={{ width: "380px", height: "570px" }}
+                  style={{ width: "384px", height: "576px" }}
                 >
                   <div className="relative w-full h-full">
                     <Image
                       src="/images/back-side-1.png"
                       alt="back-side"
-                      width={380}
-                      height={570}
+                      width={384}
+                      height={576}
                       className="w-full h-full object-fill"
                       priority
                     />
@@ -158,7 +161,7 @@ export default function EditPage() {
                 </div>
               </div>
               {/* Flip Button - Positioned absolutely */}
-              <div className="absolute -bottom-5 right-0 transform translate-x-1/2">
+              <div className="absolute -bottom-8 right-0 transform translate-x-1/2">
                 <button
                   onClick={() => setIsFlipped(!isFlipped)}
                   className="mx-auto mt-4 flex flex-col items-center gap-1 text-foreground hover:text-primary transition-colors"
@@ -243,7 +246,7 @@ export default function EditPage() {
             </div>
 
             {/* Quick Actions */}
-            <div className="mb-8">
+            <div className="mb-2">
               <span className="text-sm font-medium text-foreground mb-3 block">
                 Quick Actions
               </span>
@@ -278,6 +281,8 @@ export default function EditPage() {
                 </Button>
               </div>
             </div>
+
+            <div className="mt-6 mb-6 border border-[#E4E4E7]"></div>
 
             {/* Action Buttons */}
             <div className="space-y-3">
