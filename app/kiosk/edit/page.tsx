@@ -20,22 +20,6 @@ const filterStyles: Record<FilterType, string> = {
   sepia: "sepia(80%)",
 };
 
-// Default demo image
-const DEMO_IMAGE =
-  "https://images.pexels.com/photos/19650800/pexels-photo-19650800.jpeg";
-
-// Function to get initial image from sessionStorage
-const getInitialImage = () => {
-  if (typeof window !== "undefined") {
-    const croppedImage = sessionStorage.getItem("croppedImage");
-    if (croppedImage) {
-      sessionStorage.removeItem("croppedImage");
-      return croppedImage;
-    }
-  }
-  return DEMO_IMAGE;
-};
-
 export default function EditPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -45,23 +29,15 @@ export default function EditPage() {
   const [selectedFilter, setSelectedFilter] = useState<FilterType>("original");
   const [isFlipped, setIsFlipped] = useState(false);
 
-  // Initialize imageSrc lazily from sessionStorage to avoid setState inside an effect
-  const [imageSrc, setImageSrc] = useState<string>(() => {
-    if (typeof window !== "undefined") {
-      const croppedImage = sessionStorage.getItem("croppedImage");
-      if (croppedImage) {
-        sessionStorage.removeItem("croppedImage");
-        return croppedImage;
-      }
-    }
-    return DEMO_IMAGE;
-  });
+  const API_BASE_URL =
+    process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
+  const imageUrl = sessionId
+    ? `${API_BASE_URL}/session/${sessionId}/image`
+    : "https://images.pexels.com/photos/19650800/pexels-photo-19650800.jpeg";
 
   const handleReset = () => {
     setBrightness(100);
     setSelectedFilter("original");
-    // Optionally reset to original image
-    setImageSrc(DEMO_IMAGE);
   };
 
   const filters: { label: string; value: FilterType }[] = [
@@ -76,10 +52,6 @@ export default function EditPage() {
   const combinedFilter = `brightness(${brightness}%) ${filterStyles[selectedFilter]}`;
 
   const handleNext = () => {
-    // Save the final edited image with filters applied
-    sessionStorage.setItem("editedImage", imageSrc);
-    sessionStorage.setItem("brightness", brightness.toString());
-    sessionStorage.setItem("filter", selectedFilter);
     router.push(`/kiosk/review?session=${sessionId}`);
   };
 
@@ -88,9 +60,9 @@ export default function EditPage() {
   };
 
   const handleCrop = () => {
-    // Navigate to crop page with current image
+    // Navigate to crop page with current image (uses backend session image)
     const cropUrl = `/kiosk/edit/crop?image=${encodeURIComponent(
-      imageSrc
+      imageUrl
     )}&session=${sessionId}`;
     console.log("Navigating to crop page:", cropUrl); // Debug log
     router.push(cropUrl);
@@ -161,7 +133,7 @@ export default function EditPage() {
                     style={{ filter: combinedFilter }}
                   >
                     <img
-                      src={imageSrc}
+                      src={imageUrl}
                       alt="Photo preview"
                       className="w-full h-full object-cover"
                     />

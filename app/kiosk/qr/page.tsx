@@ -1,13 +1,19 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { QRCodeSVG } from "qrcode.react";
 import { ProgressSteps } from "@/components/global/progress-steps";
 import PostaFooter from "@/components/global/posta-footer";
 import Image from "next/image";
 import useIdleActivity from "@/hooks/useIdleActivity";
+
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
+const WS_BASE_URL =
+  process.env.NEXT_PUBLIC_WS_BASE_URL ||
+  API_BASE_URL.replace(/^http/, "ws");
 
 export default function QRPage() {
   const searchParams = useSearchParams();
@@ -20,9 +26,63 @@ export default function QRPage() {
    window.location.href = window.location.origin + "/";
   });
 
-  const mobileUrl = `${
-    typeof window !== "undefined" ? window.location.origin : ""
-  }/mobile/upload?session=${sessionId}`;
+  const mobileUrl = useMemo(() => {
+    if (typeof window === "undefined" || !sessionId) return "";
+    return `${window.location.origin}/mobile/upload?session=${sessionId}`;
+  }, [sessionId]);
+
+  // Listen for image upload via WebSocket and move to the edit step when ready
+  useEffect(() => {
+    if (!sessionId) return;
+
+    const wsUrl = `${WS_BASE_URL}/ws?sessionId=${encodeURIComponent(
+      sessionId,
+    )}`;
+    let ws: WebSocket | null = null;
+
+    try {
+      ws = new WebSocket(wsUrl);
+    } catch (error) {
+      console.error("Failed to open WebSocket connection", error);
+      return;
+    }
+
+    ws.onopen = () => {
+      console.log("Connected to kiosk session WebSocket:", sessionId);
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data as string) as {
+          type?: string;
+          sessionId?: string;
+          imageUrl?: string;
+        };
+
+        if (data.type === "image_ready" && data.sessionId === sessionId) {
+          console.log("Image ready for session:", sessionId, data.imageUrl);
+          setStep(3);
+          router.push(`/kiosk/edit?session=${sessionId}`);
+        }
+      } catch (error) {
+        console.error("Error parsing WebSocket message", error);
+      }
+    };
+
+    ws.onerror = (event) => {
+      console.error("WebSocket error", event);
+    };
+
+    ws.onclose = () => {
+      console.log("WebSocket closed for session:", sessionId);
+    };
+
+    return () => {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.close();
+      }
+    };
+  }, [router, sessionId]);
 
   const handleStayHere = () => {
     resetIdleTimer();

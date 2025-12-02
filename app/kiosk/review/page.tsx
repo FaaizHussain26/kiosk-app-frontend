@@ -10,6 +10,12 @@ export default function ReviewPage() {
   const router = useRouter();
   const sessionId = searchParams.get("session") || "";
 
+   const API_BASE_URL =
+    process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
+  const imageUrl = sessionId
+    ? `${API_BASE_URL}/session/${sessionId}/image`
+    : "/photo-postcard-preview.jpg";
+
   const handleProceedToPayment = () => {
     router.push(`/kiosk/payment?session=${sessionId}`);
   };
@@ -36,7 +42,7 @@ export default function ReviewPage() {
               <p className="text-sm font-medium text-gray-700 mb-4">Preview</p>
               <div className="bg-gray-200 rounded-lg overflow-hidden aspect-square">
                 <img
-                  src="/photo-postcard-preview.jpg"
+                  src={imageUrl}
                   alt="Final preview"
                   className="w-full h-full object-cover"
                 />

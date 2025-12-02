@@ -4,13 +4,33 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import PostaFooter from "@/components/global/posta-footer";
+import { useCreateSession } from "@/hooks/useCreateSession";
 
 export default function Home() {
   const router = useRouter();
-  const [sessionId] = useState(() => Math.random().toString(36).substr(2, 9));
+  const [isStarting, setIsStarting] = useState(false);
+  const createSessionMutation = useCreateSession();
 
-  const handleStart = () => {
-    router.push(`/kiosk/qr?session=${sessionId}`);
+  const handleStart = async () => {
+    if (isStarting) return;
+    setIsStarting(true);
+
+    try {
+      const data = await createSessionMutation.mutateAsync();
+
+      if (!data?.token) {
+        console.error("No token returned from backend", data);
+        alert("Sorry, something went wrong starting your session. Please try again.");
+        return;
+      }
+
+      router.push(`/kiosk/qr?session=${data.token}`);
+    } catch (error) {
+      console.error("Error creating session", error);
+      alert("Unable to connect to the kiosk service. Please call a staff member.");
+    } finally {
+      setIsStarting(false);
+    }
   };
 
   return (

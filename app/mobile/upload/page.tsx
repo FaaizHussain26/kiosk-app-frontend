@@ -6,6 +6,7 @@ import { useSearchParams, useRouter } from "next/navigation"
 import { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { AlertCircle, CheckCircle2, Upload } from "lucide-react"
+import { useUploadSessionImage } from "@/hooks/useUploadSessionImage"
 
 type UploadState = "initial" | "rescan" | "success"
 
@@ -17,8 +18,15 @@ export default function MobileUploadPage() {
   const [state, setState] = useState<UploadState>("initial")
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const uploadMutation = useUploadSessionImage()
 
   const handleFileSelect = async (file: File) => {
+    if (!sessionId) {
+      alert("This upload link is invalid or has expired. Please rescan the QR code on the kiosk.")
+      router.push("/")
+      return
+    }
+
     if (!file.type.startsWith("image/")) {
       alert("Please select an image file")
       return
@@ -32,12 +40,18 @@ export default function MobileUploadPage() {
     setSelectedFile(file)
     setIsLoading(true)
 
-    // Simulate upload - in production, upload to backend
-    setTimeout(() => {
-      console.log("[v0] Photo uploaded for session:", sessionId)
-      setState("rescan")
+    try {
+      const data = await uploadMutation.mutateAsync({ sessionId, file })
+      console.log("Photo uploaded for session:", sessionId, data)
+
+      // After successful upload, immediately show success to the user
+      setState("success")
+    } catch (error) {
+      console.error("Error uploading image", error)
+      alert("We couldn't upload your photo. Please check your connection and try again.")
+    } finally {
       setIsLoading(false)
-    }, 1500)
+    }
   }
 
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -113,7 +127,12 @@ export default function MobileUploadPage() {
             <p className="text-gray-600 text-center mb-8">
               For your security, please rescan the kiosk QR code to finish uploading your photo.
             </p>
-            <Button onClick={handleRescanConfirm} size="lg" className="bg-emerald-700 hover:bg-emerald-800">
+            <Button
+              onClick={handleRescanConfirm}
+              size="lg"
+              className="bg-emerald-700 hover:bg-emerald-800"
+              disabled={isLoading}
+            >
               {"I've Rescanned the Code"}
             </Button>
           </div>
