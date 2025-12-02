@@ -17,14 +17,14 @@ export default function ReviewPage() {
   const router = useRouter();
   const sessionId = searchParams.get("session") || "";
 
-  // const API_BASE_URL =
-  //   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
-  // const imageUrl = sessionId
-  //   ? `${API_BASE_URL}/session/${sessionId}/image`
-  //   : "/photo-postcard-preview.jpg";
+  const API_BASE_URL =
+    process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
+  const imageUrl = sessionId
+    ? `${API_BASE_URL}/session/${sessionId}/image`
+    : "/photo-postcard-preview.jpg";
 
-  const imageUrl =
-    "https://images.pexels.com/photos/32931764/pexels-photo-32931764.jpeg";
+  // const imageUrl =
+  //   "https://images.pexels.com/photos/32931764/pexels-photo-32931764.jpeg";
 
   const handleProceedToPayment = () => {
     router.push(`/kiosk/payment?session=${sessionId}`);
