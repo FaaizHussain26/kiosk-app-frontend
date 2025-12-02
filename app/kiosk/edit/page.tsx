@@ -20,6 +20,22 @@ const filterStyles: Record<FilterType, string> = {
   sepia: "sepia(80%)",
 };
 
+// Default demo image
+const DEMO_IMAGE =
+  "https://images.pexels.com/photos/19650800/pexels-photo-19650800.jpeg";
+
+// Function to get initial image from sessionStorage
+const getInitialImage = () => {
+  if (typeof window !== "undefined") {
+    const croppedImage = sessionStorage.getItem("croppedImage");
+    if (croppedImage) {
+      sessionStorage.removeItem("croppedImage");
+      return croppedImage;
+    }
+  }
+  return DEMO_IMAGE;
+};
+
 export default function EditPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -29,9 +45,23 @@ export default function EditPage() {
   const [selectedFilter, setSelectedFilter] = useState<FilterType>("original");
   const [isFlipped, setIsFlipped] = useState(false);
 
+  // Initialize imageSrc lazily from sessionStorage to avoid setState inside an effect
+  const [imageSrc, setImageSrc] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      const croppedImage = sessionStorage.getItem("croppedImage");
+      if (croppedImage) {
+        sessionStorage.removeItem("croppedImage");
+        return croppedImage;
+      }
+    }
+    return DEMO_IMAGE;
+  });
+
   const handleReset = () => {
     setBrightness(100);
     setSelectedFilter("original");
+    // Optionally reset to original image
+    setImageSrc(DEMO_IMAGE);
   };
 
   const filters: { label: string; value: FilterType }[] = [
@@ -46,11 +76,24 @@ export default function EditPage() {
   const combinedFilter = `brightness(${brightness}%) ${filterStyles[selectedFilter]}`;
 
   const handleNext = () => {
+    // Save the final edited image with filters applied
+    sessionStorage.setItem("editedImage", imageSrc);
+    sessionStorage.setItem("brightness", brightness.toString());
+    sessionStorage.setItem("filter", selectedFilter);
     router.push(`/kiosk/review?session=${sessionId}`);
   };
 
   const handleBack = () => {
     router.push(`/kiosk/qr?session=${sessionId}`);
+  };
+
+  const handleCrop = () => {
+    // Navigate to crop page with current image
+    const cropUrl = `/kiosk/edit/crop?image=${encodeURIComponent(
+      imageSrc
+    )}&session=${sessionId}`;
+    console.log("Navigating to crop page:", cropUrl); // Debug log
+    router.push(cropUrl);
   };
 
   return (
@@ -102,7 +145,6 @@ export default function EditPage() {
       <div className="w-full max-w-5xl mx-auto px-4 py-8">
         <div className="flex flex-col lg:flex-row gap-8 items-start justify-center">
           {/* Postcard Preview */}
-          {/* Postcard Preview */}
           <div className="w-[380px] mx-auto">
             <div
               className="flip-card relative w-full"
@@ -119,7 +161,7 @@ export default function EditPage() {
                     style={{ filter: combinedFilter }}
                   >
                     <img
-                      src="https://images.pexels.com/photos/19650800/pexels-photo-19650800.jpeg"
+                      src={imageSrc}
                       alt="Photo preview"
                       className="w-full h-full object-cover"
                     />
@@ -144,7 +186,7 @@ export default function EditPage() {
                 </div>
               </div>
               {/* Flip Button - Positioned absolutely */}
-              <div className="absolute bottom-[-25px] right-[-37px]   ">
+              <div className="absolute -bottom-5 right-0 transform translate-x-1/2">
                 <button
                   onClick={() => setIsFlipped(!isFlipped)}
                   className="mx-auto mt-4 flex flex-col items-center gap-1 text-foreground hover:text-primary transition-colors"
@@ -156,7 +198,7 @@ export default function EditPage() {
                       width={25}
                       height={25}
                     />
-                    <span className="text-[10px] text-[#52525B] font-medium leading-none  mt-1">
+                    <span className="text-[10px] text-[#52525B] font-medium leading-none mt-1">
                       {isFlipped ? "View Front" : "View Back"}
                     </span>
                   </div>
@@ -238,8 +280,14 @@ export default function EditPage() {
                   variant="outline"
                   size="sm"
                   className="h-12 border-[E4E4E7] text-[#52525B] hover:bg-gray-50 hover:text-gray-800 bg-white flex items-center gap-2"
+                  onClick={handleCrop}
                 >
-                  <Crop className="w-4 h-4" />
+                  <Image
+                    src="/icons/crop-icon.png"
+                    alt="crop-icon"
+                    width={16}
+                    height={16}
+                  />
                   Crop Image
                 </Button>
                 <Button
@@ -248,7 +296,12 @@ export default function EditPage() {
                   onClick={handleReset}
                   className="h-12 border-[E4E4E7] text-[#52525B] hover:bg-gray-50 hover:text-gray-800 bg-white flex items-center gap-2"
                 >
-                  <RotateCcw className="w-4 h-4" />
+                  <Image
+                    src="/icons/reset-icon.png"
+                    alt="reset-icon"
+                    width={16}
+                    height={16}
+                  />
                   Reset
                 </Button>
               </div>
@@ -257,7 +310,7 @@ export default function EditPage() {
             {/* Action Buttons */}
             <div className="space-y-3">
               <Button
-                className="w-full rounded-full h-12 text-md font-bold "
+                className="w-full rounded-full h-12 text-md font-bold"
                 size="lg"
                 onClick={handleNext}
               >
@@ -265,7 +318,7 @@ export default function EditPage() {
               </Button>
               <Button
                 variant="outline"
-                className="h-12 border-[E4E4E7] text-[#52525B] hover:bg-gray-50 hover:text-gray-800 bg-white w-full rounded-full text-md font-bold "
+                className="h-12 border-[E4E4E7] text-[#52525B] hover:bg-gray-50 hover:text-gray-800 bg-white w-full rounded-full text-md font-bold"
                 size="lg"
                 onClick={handleBack}
               >
