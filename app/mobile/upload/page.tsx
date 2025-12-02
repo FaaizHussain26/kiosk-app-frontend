@@ -55,6 +55,7 @@ export default function MobileUploadPage() {
   }
 
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (isLoading) return
     const file = e.target.files?.[0]
     if (file) {
       handleFileSelect(file)
@@ -70,7 +71,6 @@ export default function MobileUploadPage() {
   }
 
   const handleRescanConfirm = () => {
-    // In production, after rescanning verification, mark as complete
     setState("success")
   }
 
@@ -90,14 +90,29 @@ export default function MobileUploadPage() {
 
             {/* Upload Area */}
             <div
-              onClick={() => fileInputRef.current?.click()}
+              onClick={() => {
+                if (!isLoading) {
+                  fileInputRef.current?.click()
+                }
+              }}
               onDragOver={handleDragDrop}
               onDrop={handleDragDrop}
-              className="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center cursor-pointer hover:border-gray-400 transition-colors"
+              className={`border-2 border-dashed rounded-lg p-12 text-center transition-colors ${
+                isLoading
+                  ? "border-gray-200 bg-gray-50 cursor-default opacity-70"
+                  : "border-gray-300 cursor-pointer hover:border-gray-400"
+              }`}
+              aria-busy={isLoading}
             >
               <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="font-semibold text-gray-900 mb-1">Tap to Select Photo</p>
-              <p className="text-sm text-gray-600">Choose from your photo library</p>
+              <p className="font-semibold text-gray-900 mb-1">
+                {isLoading ? "Uploading your photo..." : "Tap to Select Photo"}
+              </p>
+              <p className="text-sm text-gray-600">
+                {isLoading
+                  ? "Please wait while we upload your image. Don't close this tab."
+                  : "Choose from your photo library"}
+              </p>
               <input
                 ref={fileInputRef}
                 type="file"
