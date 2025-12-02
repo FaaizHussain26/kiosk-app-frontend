@@ -1,12 +1,13 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { QRCodeSVG } from "qrcode.react";
 import { ProgressSteps } from "@/components/global/progress-steps";
 import PostaFooter from "@/components/global/posta-footer";
 import Image from "next/image";
+import useIdleActivity from "@/hooks/useIdleActivity";
 
 export default function QRPage() {
   const searchParams = useSearchParams();
@@ -14,25 +15,23 @@ export default function QRPage() {
   const sessionId = searchParams.get("session") || "";
   const [step, setStep] = useState(1);
 
-  // Generate the mobile URL - in production, this would be your actual domain
+  const { showModal, resetIdleTimer } = useIdleActivity(() => {
+   console.log("Idle timeout triggered");
+   window.location.href = window.location.origin + "/";
+  });
+
   const mobileUrl = `${
     typeof window !== "undefined" ? window.location.origin : ""
   }/mobile/upload?session=${sessionId}`;
 
-  useEffect(() => {
-    // Check if photo has been uploaded every 2 seconds
-    const interval = setInterval(() => {
-      // This would connect to your backend to check upload status
-      // For now, it's a placeholder
-      console.log("[v0] Checking for uploaded photo...");
-    }, 2000);
-
-    return () => clearInterval(interval);
-  }, [sessionId]);
+  const handleStayHere = () => {
+    resetIdleTimer();
+  };
 
   const handleBack = () => {
     router.push("/");
   };
+
 
   return (
     <div className="h-screen w-full flex flex-col overflow-hidden bg-pattern bg-background">
@@ -133,6 +132,27 @@ export default function QRPage() {
 
       {/* Footer */}
       <PostaFooter />
+
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full mx-4">
+            <h3 className="text-2xl font-bold text-[#18181B] mb-4 text-center">
+              Are you still there?
+            </h3>
+            <p className="text-[#52525B] mb-6 text-center">
+              You've been idle for a while. The app will return to the home screen shortly.
+            </p>
+            <div className="flex justify-center">
+              <Button
+                onClick={handleStayHere}
+                className="px-8 py-3 bg-primary text-white hover:bg-primary/90 rounded-sm"
+              >
+                Stay Here
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
