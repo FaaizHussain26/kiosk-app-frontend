@@ -170,7 +170,7 @@ const CropImage = () => {
           <div className="flex gap-4 pt-2">
             <Button
               variant="outline"
-              className="flex-1 h-12 text-md font-bold rounded-full border-[E4E4E7] text-[#52525B] hover:bg-gray-50 hover:text-gray-800 bg-white"
+              className="flex-1 h-12 text-md font-bold rounded-full border-[E4E4E7] text-primary hover:bg-gray-50  bg-white"
               onClick={handleCancel}
               disabled={isProcessing}
             >
