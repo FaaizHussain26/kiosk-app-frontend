@@ -92,17 +92,17 @@ export default function MobileUploadPage() {
               Select a photo from your library to create your postcard.
             </p>
 
-            <div className="mt-4 mb-12 flex">
-              <p className=" text-[#18181B] w-full ">
+            <div className="mt-4 mb-8 flex items-center">
+              <p className="text-[#18181B] w-full max-w-[300px]">
                 Note: For best results, select a vertical photo.
               </p>
-              <div className="w-[75px] object-contain mr-8 ml-5">
+              <div className="w-[60px] h-[60px] ml-5 mr-8">
                 <Image
                   src="/icons/mobile-icon.png"
                   alt="Mobile Icon"
                   className="w-full h-full object-contain"
-                  width={55}
-                  height={55}
+                  width={75}
+                  height={75}
                 />
               </div>
             </div>
@@ -200,22 +200,24 @@ export default function MobileUploadPage() {
 
       case "success":
         return (
-          <div className="w-full max-w-md mx-auto px-4 py-8 flex flex-col items-center justify-center min-h-screen">
-            <Image
-              src="/icons/success-icon.png"
-              alt="success-icon"
-              width={50}
-              height={50}
-              className="w-14 h-14 t mx-auto mb-6"
-            />
+          <div className="w-full max-w-md mx-auto px-4 py-8 min-h-screen">
+            <div className="mt-10 flex flex-col items-center">
+              <Image
+                src="/icons/upload-success-icon.png"
+                alt="success-icon"
+                width={70}
+                height={70}
+                className="w-26 h-26 t mx-auto mb-6"
+              />
 
-            <h1 className="text-4xl font-bold text-primary mb-2">
-              Upload Successful!
-            </h1>
-            <p className="text-[#18181B] text-center ">
-              Looking good! Your photo is ready for editing in the kiosk. You
-              can close this tab.
-            </p>
+              <h1 className="text-4xl font-bold text-primary mb-2 mt-2">
+                Upload Successful!
+              </h1>
+              <p className="text-[#18181B] text-center ">
+                Looking good! Your photo is ready for editing in the kiosk. You
+                can close this tab.
+              </p>
+            </div>
           </div>
         );
     }

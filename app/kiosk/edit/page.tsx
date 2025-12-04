@@ -34,11 +34,16 @@ export default function EditPage() {
   const router = useRouter();
   const sessionId = searchParams.get("session") || "";
 
-  // Zustand cropped image
-  const { croppedImage } = useCropStore();
+  // ✅ Get all values from Zustand store
+  const {
+    croppedImage,
+    brightness,
+    selectedFilter,
+    setBrightness,
+    setSelectedFilter,
+    resetFilters,
+  } = useCropStore();
 
-  const [brightness, setBrightness] = useState(100);
-  const [selectedFilter, setSelectedFilter] = useState<FilterType>("original");
   const [isFlipped, setIsFlipped] = useState(false);
 
   const API_BASE_URL =
@@ -49,8 +54,7 @@ export default function EditPage() {
     : "https://images.pexels.com/photos/34934422/pexels-photo-34934422.jpeg";
 
   const handleReset = () => {
-    setBrightness(100);
-    setSelectedFilter("original");
+    resetFilters();
   };
 
   const combinedFilter = `brightness(${brightness}%) ${filterStyles[selectedFilter]}`;

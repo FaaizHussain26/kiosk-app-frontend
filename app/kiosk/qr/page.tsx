@@ -8,12 +8,12 @@ import { ProgressSteps } from "@/components/global/progress-steps";
 import PostaFooter from "@/components/global/posta-footer";
 import Image from "next/image";
 import useIdleActivity from "@/hooks/useIdleActivity";
+import { useCropStore } from "@/stores/crop-store";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
 const WS_BASE_URL =
-  process.env.NEXT_PUBLIC_WS_BASE_URL ||
-  API_BASE_URL.replace(/^http/, "ws");
+  process.env.NEXT_PUBLIC_WS_BASE_URL || API_BASE_URL.replace(/^http/, "ws");
 
 export default function QRPage() {
   const searchParams = useSearchParams();
@@ -21,9 +21,12 @@ export default function QRPage() {
   const sessionId = searchParams.get("session") || "";
   const [step, setStep] = useState(1);
 
+  // ✅ Get resetAll function from store
+  const { resetAll } = useCropStore();
+
   const { showModal, resetIdleTimer } = useIdleActivity(() => {
-   console.log("Idle timeout triggered");
-   window.location.href = window.location.origin + "/";
+    console.log("Idle timeout triggered");
+    window.location.href = window.location.origin + "/";
   });
 
   const mobileUrl = useMemo(() => {
@@ -31,12 +34,30 @@ export default function QRPage() {
     return `${window.location.origin}/mobile/upload?session=${sessionId}`;
   }, [sessionId]);
 
+  // ✅ Clear store when component mounts (new session starts)
+  useEffect(() => {
+    if (!sessionId) return;
+
+    // Check if this is a new session
+    const lastSessionId = sessionStorage.getItem("lastSessionId");
+
+    if (lastSessionId !== sessionId) {
+      // New session detected - clear everything from previous session
+      console.log(
+        "New session detected, clearing store for session:",
+        sessionId
+      );
+      resetAll();
+      sessionStorage.setItem("lastSessionId", sessionId);
+    }
+  }, [sessionId, resetAll]);
+
   // Listen for image upload via WebSocket and move to the edit step when ready
   useEffect(() => {
     if (!sessionId) return;
 
     const wsUrl = `${WS_BASE_URL}/ws?sessionId=${encodeURIComponent(
-      sessionId,
+      sessionId
     )}`;
     let ws: WebSocket | null = null;
 
@@ -91,7 +112,6 @@ export default function QRPage() {
   const handleBack = () => {
     router.push("/");
   };
-
 
   return (
     <div className="h-screen w-full flex flex-col overflow-hidden bg-pattern bg-background">
@@ -200,7 +220,10 @@ export default function QRPage() {
               Are you still there?
             </h3>
             <p className="text-[#52525B] mb-6 text-center">
-              You've been idle for a while. The app will return to the home screen shortly.
+              <p>
+                You&apos;ve been idle for a while. The app will return to the
+                home screen shortly.
+              </p>
             </p>
             <div className="flex justify-center">
               <Button
