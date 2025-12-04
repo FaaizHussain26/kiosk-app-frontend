@@ -20,14 +20,13 @@ async function canvasPreview(
   rotate = 0
 ) {
   const ctx = canvas.getContext("2d");
-
   if (!ctx) {
     throw new Error("No 2d context");
   }
 
   const scaleX = image.naturalWidth / image.width;
   const scaleY = image.naturalHeight / image.height;
-  const pixelRatio = window.devicePixelRatio;
+  const pixelRatio = window.devicePixelRatio || 1;
 
   canvas.width = Math.floor(crop.width * scaleX * pixelRatio);
   canvas.height = Math.floor(crop.height * scaleY * pixelRatio);
@@ -37,18 +36,17 @@ async function canvasPreview(
 
   const cropX = crop.x * scaleX;
   const cropY = crop.y * scaleY;
-
   const rotateRads = rotate * TO_RADIANS;
   const centerX = image.naturalWidth / 2;
   const centerY = image.naturalHeight / 2;
 
   ctx.save();
-
   ctx.translate(-cropX, -cropY);
   ctx.translate(centerX, centerY);
   ctx.rotate(rotateRads);
   ctx.scale(scale, scale);
   ctx.translate(-centerX, -centerY);
+
   ctx.drawImage(
     image,
     0,
@@ -77,21 +75,36 @@ const CropImage = () => {
     x: 12.5,
     y: 0,
   });
+
   const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
   const [scale, setScale] = useState(1);
   const [rotation, setRotation] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [error, setError] = useState<string>("");
 
   const imgRef = useRef<HTMLImageElement>(null);
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
 
+  const handleImageLoad = () => {
+    setError("");
+  };
+
+  const handleImageError = () => {
+    setError("Failed to load image. Please check the URL.");
+    console.error("[v0] Image failed to load from:", imageSrc);
+  };
+
   const handleCrop = async () => {
     if (!completedCrop || !imgRef.current || !previewCanvasRef.current) {
+      setError("Please select a crop area");
       return;
     }
 
     setIsProcessing(true);
+    setError("");
+
     try {
+      // Draw cropped image onto canvas
       await canvasPreview(
         imgRef.current,
         previewCanvasRef.current,
@@ -100,15 +113,36 @@ const CropImage = () => {
         rotation
       );
 
-      const croppedImage = previewCanvasRef.current.toDataURL(
-        "image/jpeg",
-        0.95
+      // Create a temporary canvas to scale down the image
+      const scaleFactor = 0.5; // 50% of original size
+      const tempCanvas = document.createElement("canvas");
+      tempCanvas.width = previewCanvasRef.current.width * scaleFactor;
+      tempCanvas.height = previewCanvasRef.current.height * scaleFactor;
+
+      const ctx = tempCanvas.getContext("2d");
+      if (!ctx) throw new Error("Failed to get 2D context for temp canvas");
+
+      ctx.drawImage(
+        previewCanvasRef.current,
+        0,
+        0,
+        tempCanvas.width,
+        tempCanvas.height
       );
+
+      // Convert to JPEG with lower quality (0.7)
+      const croppedImage = tempCanvas.toDataURL("image/jpeg", 0.7);
+
+      // Save to sessionStorage
       sessionStorage.setItem("croppedImage", croppedImage);
-      router.push(`/kiosk/edit?session=${sessionId}`);
+
+      // Navigate to edit page
+      setTimeout(() => {
+        router.push(`/kiosk/edit?session=${sessionId}`);
+      }, 100);
     } catch (e) {
-      console.error("Error cropping image:", e);
-      alert("Failed to crop image. Please try again.");
+      console.error("[v0] Error cropping image:", e);
+      setError("Failed to crop image. Please try again.");
     } finally {
       setIsProcessing(false);
     }
@@ -118,9 +152,16 @@ const CropImage = () => {
     router.push(`/kiosk/edit?session=${sessionId}`);
   };
 
-  const handleRotate = () => {
-    setRotation((prev) => (prev + 90) % 360);
-  };
+  if (!imageSrc) {
+    return (
+      <div className="h-screen w-full flex flex-col overflow-hidden bg-pattern bg-background items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-bold text-red-500">Error</h2>
+          <p className="text-foreground">No image provided for cropping</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen w-full flex flex-col overflow-hidden bg-pattern bg-background">
@@ -144,12 +185,15 @@ const CropImage = () => {
             ref={imgRef}
             alt="Crop preview"
             src={imageSrc}
+            onLoad={handleImageLoad}
+            onError={handleImageError}
             style={{
               transform: `scale(${scale}) rotate(${rotation}deg)`,
               maxWidth: "100%",
               maxHeight: "70vh",
               objectFit: "contain",
             }}
+            crossOrigin="anonymous"
           />
         </ReactCrop>
       </div>

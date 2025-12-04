@@ -4,12 +4,21 @@ import PostaFooter from "@/components/global/posta-footer";
 import { ProgressSteps } from "@/components/global/progress-steps";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { Crop, RotateCcw } from "lucide-react";
+import { useCropStore } from "@/stores/crop-store";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
 type FilterType = "original" | "warm" | "cool" | "pastel" | "mono" | "sepia";
+
+const filters: { label: string; value: FilterType }[] = [
+  { label: "Original", value: "original" },
+  { label: "Warm", value: "warm" },
+  { label: "Cool", value: "cool" },
+  { label: "Pastel", value: "pastel" },
+  { label: "Mono", value: "mono" },
+  { label: "Sepia", value: "sepia" },
+];
 
 const filterStyles: Record<FilterType, string> = {
   original: "",
@@ -25,29 +34,24 @@ export default function EditPage() {
   const router = useRouter();
   const sessionId = searchParams.get("session") || "";
 
+  // Zustand cropped image
+  const { croppedImage } = useCropStore();
+
   const [brightness, setBrightness] = useState(100);
   const [selectedFilter, setSelectedFilter] = useState<FilterType>("original");
   const [isFlipped, setIsFlipped] = useState(false);
 
   const API_BASE_URL =
     process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
+
   const imageUrl = sessionId
-    ? `${API_BASE_URL}/session/${sessionId}/image`
-    : "https://images.pexels.com/photos/19650800/pexels-photo-19650800.jpeg";
+    ? `${API_BASE_URL}/session/${sessionId}`
+    : "https://images.pexels.com/photos/34934422/pexels-photo-34934422.jpeg";
 
   const handleReset = () => {
     setBrightness(100);
     setSelectedFilter("original");
   };
-
-  const filters: { label: string; value: FilterType }[] = [
-    { label: "Original", value: "original" },
-    { label: "Warm", value: "warm" },
-    { label: "Cool", value: "cool" },
-    { label: "Pastel", value: "pastel" },
-    { label: "Mono", value: "mono" },
-    { label: "Sepia", value: "sepia" },
-  ];
 
   const combinedFilter = `brightness(${brightness}%) ${filterStyles[selectedFilter]}`;
 
@@ -60,11 +64,9 @@ export default function EditPage() {
   };
 
   const handleCrop = () => {
-    // Navigate to crop page with current image (uses backend session image)
     const cropUrl = `/kiosk/edit/crop?image=${encodeURIComponent(
       imageUrl
     )}&session=${sessionId}`;
-    console.log("Navigating to crop page:", cropUrl); // Debug log
     router.push(cropUrl);
   };
 
@@ -133,12 +135,13 @@ export default function EditPage() {
                     style={{ filter: combinedFilter }}
                   >
                     <Image
-                      src={imageUrl}
+                      src={croppedImage || imageUrl}
                       alt="Photo preview"
                       width={384}
                       height={576}
                       className="w-full h-full object-cover"
                       unoptimized
+                      priority
                     />
                   </div>
                 </div>
