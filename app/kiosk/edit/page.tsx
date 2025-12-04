@@ -298,7 +298,7 @@ export default function EditPage() {
               </Button>
               <Button
                 variant="outline"
-                className="h-12 border-[E4E4E7] text-primary hover:bg-gray-50 bg-white w-full rounded-full text-md font-bold"
+                className="h-12 border-[#E4E4E7] text-primary hover:bg-gray-50 bg-white w-full rounded-full text-md font-bold"
                 size="lg"
                 onClick={handleBack}
               >
