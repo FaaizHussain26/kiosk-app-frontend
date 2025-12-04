@@ -4,7 +4,6 @@ import PostaFooter from "@/components/global/posta-footer";
 import { ProgressSteps } from "@/components/global/progress-steps";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { Crop, RotateCcw } from "lucide-react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
