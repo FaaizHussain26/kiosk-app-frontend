@@ -5,6 +5,18 @@ import { ProgressSteps } from "@/components/global/progress-steps";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useCropStore } from "@/stores/crop-store";
+
+type FilterType = "original" | "warm" | "cool" | "pastel" | "mono" | "sepia";
+
+const filterStyles: Record<FilterType, string> = {
+  original: "",
+  warm: "sepia(20%) saturate(140%) hue-rotate(-10deg)",
+  cool: "saturate(90%) hue-rotate(15deg) brightness(105%)",
+  pastel: "saturate(70%) brightness(110%) contrast(90%)",
+  mono: "grayscale(100%)",
+  sepia: "sepia(80%)",
+};
 
 const consitions = [
   "High quality print",
@@ -17,14 +29,21 @@ export default function ReviewPage() {
   const router = useRouter();
   const sessionId = searchParams.get("session") || "";
 
+  // ✅ Get all values from Zustand store
+  const { croppedImage, brightness, selectedFilter } = useCropStore();
+
   const API_BASE_URL =
     process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
-  const imageUrl = sessionId
-    ? `${API_BASE_URL}/session/${sessionId}/image`
-    : "/photo-postcard-preview.jpg";
 
-  // const imageUrl =
-  //   "https://images.pexels.com/photos/32931764/pexels-photo-32931764.jpeg";
+  // Use cropped image if available, otherwise fallback to original
+  const imageUrl =
+    croppedImage ||
+    (sessionId
+      ? `${API_BASE_URL}/session/${sessionId}/image`
+      : "/photo-postcard-preview.jpg");
+
+  // ✅ Apply the same filters as edit page
+  const combinedFilter = `brightness(${brightness}%) ${filterStyles[selectedFilter]}`;
 
   const handleProceedToPayment = () => {
     router.push(`/kiosk/payment?session=${sessionId}`);
@@ -68,13 +87,17 @@ export default function ReviewPage() {
                 className="bg-card shadow-lg p-4 border border-border"
                 style={{ width: "330px", height: "470px" }}
               >
-                <div className="w-full h-full overflow-hidden relative">
+                <div
+                  className="w-full h-full overflow-hidden relative"
+                  style={{ filter: combinedFilter }}
+                >
                   <Image
                     src={imageUrl}
                     alt="Photo preview"
                     fill
-                    className="object-contain"
+                    className="object-cover"
                     unoptimized
+                    priority
                   />
                 </div>
               </div>

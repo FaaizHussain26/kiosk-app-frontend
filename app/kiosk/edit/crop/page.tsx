@@ -9,6 +9,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { ZoomIn, ZoomOut, RotateCw } from "lucide-react";
 import { ProgressSteps } from "@/components/global/progress-steps";
 import PostaFooter from "@/components/global/posta-footer";
+import { useCropStore } from "@/stores/crop-store";
 
 const TO_RADIANS = Math.PI / 180;
 
@@ -67,6 +68,9 @@ const CropImage = () => {
   const searchParams = useSearchParams();
   const imageSrc = decodeURIComponent(searchParams.get("image") || "");
   const sessionId = searchParams.get("session") || "";
+
+  // ✅ Added Zustand store hook
+  const { setCroppedImage } = useCropStore();
 
   const [crop, setCrop] = useState<Crop>({
     unit: "%",
@@ -133,8 +137,8 @@ const CropImage = () => {
       // Convert to JPEG with lower quality (0.7)
       const croppedImage = tempCanvas.toDataURL("image/jpeg", 0.7);
 
-      // Save to sessionStorage
-      sessionStorage.setItem("croppedImage", croppedImage);
+      // ✅ Changed: Save to Zustand store instead of sessionStorage
+      setCroppedImage(croppedImage);
 
       // Navigate to edit page
       setTimeout(() => {
