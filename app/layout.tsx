@@ -11,7 +11,9 @@ const nationalPark = National_Park({
 export const metadata: Metadata = {
   title: "Posta",
   description: "Posta - The best way to manage your photos",
+  viewport: "width=device-width, initial-scale=1", // ✅ Added here
 };
++9;
 
 export default function RootLayout({
   children,
@@ -20,9 +22,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${nationalPark.variable} antialiased`}
-      >
+      <body className={`${nationalPark.variable} antialiased`}>
         <ReactQueryProvider>{children}</ReactQueryProvider>
       </body>
     </html>

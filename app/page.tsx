@@ -20,14 +20,18 @@ export default function Home() {
 
       if (!data?.token) {
         console.error("No token returned from backend", data);
-        alert("Sorry, something went wrong starting your session. Please try again.");
+        alert(
+          "Sorry, something went wrong starting your session. Please try again."
+        );
         return;
       }
 
       router.push(`/kiosk/qr?session=${data.token}`);
     } catch (error) {
       console.error("Error creating session", error);
-      alert("Unable to connect to the kiosk service. Please call a staff member.");
+      alert(
+        "Unable to connect to the kiosk service. Please call a staff member."
+      );
     } finally {
       setIsStarting(false);
     }
@@ -38,7 +42,7 @@ export default function Home() {
       {/* Main content */}
       <div className="flex-1 flex flex-col items-center justify-center px-4">
         {/* Hero */}
-        <h1 className="text-center mt-18 text-6xl font-bold text-primary leading-tight">
+        <h1 className="text-center mt-16 text-6xl font-bold text-primary leading-tight">
           Upload Your Favorite Photo,
           <span className="block m-0 p-0">Personalize & Print!</span>
         </h1>
@@ -46,7 +50,7 @@ export default function Home() {
         {/* Content Row */}
         <div className="flex items-center justify-center max-w-7xl w-full">
           {/* Left: Image (isolated container) */}
-          <div className="h-[635px] flex items-center justify-center">
+          <div className="h-[620px] flex items-center justify-center">
             <Image
               src="/images/postcard_pic.png"
               alt="Sample photos"
@@ -61,8 +65,8 @@ export default function Home() {
             <Image
               src="/images/start_button.png"
               alt="Start button"
-              width={460}
-              height={460}
+              width={450}
+              height={450}
               className="object-contain cursor-pointer"
               onClick={handleStart}
             />
