@@ -168,7 +168,7 @@ export default function EditPage() {
                 </div>
               </div>
               {/* Flip Button - Positioned absolutely */}
-              <div className="absolute -bottom-8 right-0 transform translate-x-1/2">
+              <div className="absolute -bottom-7 right-0 transform translate-x-1/2">
                 <button
                   onClick={() => setIsFlipped(!isFlipped)}
                   className="mx-auto mt-4 flex flex-col items-center gap-1 text-foreground hover:text-primary transition-colors"
@@ -292,7 +292,7 @@ export default function EditPage() {
             <div className="mt-6 mb-6 border border-[#E4E4E7]"></div>
 
             {/* Action Buttons */}
-            <div className="space-y-3">
+            <div className="space-y-2">
               <Button
                 className="w-full rounded-full h-12 text-md font-bold"
                 size="lg"

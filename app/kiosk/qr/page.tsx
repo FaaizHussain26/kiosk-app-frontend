@@ -116,18 +116,18 @@ export default function QRPage() {
   return (
     <div className="h-screen w-full flex flex-col overflow-hidden bg-pattern bg-background">
       {/* Progress Steps */}
-      <ProgressSteps currentStep={step} />
+      <ProgressSteps currentStep={2} />
 
-      <h2 className="text-center mt-5 text-5xl font-bold text-primary leading-tight">
+      <h2 className="text-center mt-3 text-5xl font-bold text-primary leading-tight">
         Scan to Upload Your Photo
       </h2>
-      <p className="text-center text-[#52525B] mt-3 text-lg">
+      <p className="text-center text-[#52525B] mt-1 text-lg">
         Use your {"phone's"} camera to scan the QR code below and upload your
         favorite photo.
       </p>
 
-      <div className="flex items-center justify-center p-6">
-        <div className="max-w-[750px] w-full bg-white rounded-2xl border md:p-12 shadow-[2px_2px_7px_rgba(0,0,0,0.1)]">
+      <div className="flex items-center justify-center p-7">
+        <div className="max-w-[750px] w-full bg-white rounded-2xl border md:p-10 shadow-[2px_2px_7px_rgba(0,0,0,0.1)]">
           {/* QR Code Section */}
           <div className="grid md:grid-cols-2 gap-8">
             {/* QR Code */}
@@ -178,7 +178,7 @@ export default function QRPage() {
                   },
                 ].map((item) => (
                   <div key={item.num} className="flex gap-2">
-                    <div className="flex-shrink-0">
+                    <div className="shrink-0">
                       <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary text-white font-bold font-semibold">
                         {item.num}
                       </div>

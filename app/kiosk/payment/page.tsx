@@ -24,7 +24,7 @@ export default function PaymentPage() {
         Tap or Insert to Pay
       </h2>
       <div className="relative ">
-        <div className="absolute w-150 h-150 left-[380] top-[-20]">
+        <div className="absolute w-140 h-140 left-[380] top-[-35]">
           <Image
             src="/images/card-hand.png"
             alt="Card Hand"
@@ -36,7 +36,7 @@ export default function PaymentPage() {
         </div>
       </div>
 
-      <div className="w-full mt-80 max-w-[1070px] mx-auto px-4 py-8 flex flex-col justify-center items-center z-100">
+      <div className="w-full mt-70 max-w-[1070px] mx-auto px-4 py-8 flex flex-col justify-center items-center z-100">
         <p className="text-center mt-5  text-[#52525B] leading-tight">
           Waiting for payment...
         </p>
@@ -54,7 +54,7 @@ export default function PaymentPage() {
           Go Back
         </Button>
       </div>
-      <div className="flex justify-end items-center gap-2 mr-8 ">
+      <div className="flex justify-end items-center gap-2 mr-8 mb-20 ">
         <p className="text-lg text-[#71717A] leading-tight">
           Secure Payment by
         </p>

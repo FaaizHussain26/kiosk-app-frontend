@@ -40,13 +40,10 @@ export default function PrintPage() {
       : "/photo-postcard-preview.jpg";
   }, [sessionId, croppedImage]);
 
-  // Apply the same filters as edit page
   const combinedFilter = `brightness(${brightness}%) ${filterStyles[selectedFilter]}`;
 
   const handleNewOrder = () => {
-    // ✅ Clear everything from the store when starting a new order
     resetAll();
-    // Also clear the lastSessionId so next session is treated as new
     sessionStorage.removeItem("lastSessionId");
 
     router.push("/");
@@ -66,23 +63,23 @@ export default function PrintPage() {
       </div>
 
       <div className="relative z-10 ">
-        <div className="absolute w-180 h-150 left-[220] top-[-20]">
+        <div className="absolute w-170 h-140 left-[250] top-[-20]">
           <Image
             src="/images/print-bg.png"
             alt="back-side-photo"
-            width={460}
-            height={460}
+            width={560}
+            height={560}
             className="w-full h-full object-contain"
             priority
           />
         </div>
       </div>
 
-      <div className="w-[325px] mx-auto mt-6 flex flex-col item-center justify-center z-100">
+      <div className="w-[325px] mx-auto mt-8 flex flex-col item-center justify-center z-100">
         <div className="flex items-center justify-center ">
           <div
             className="bg-card shadow-lg p-4 border border-border"
-            style={{ width: "330px", height: "470px" }}
+            style={{ width: "280px", height: "420px" }}
           >
             <div
               className="w-full h-full overflow-hidden relative"
