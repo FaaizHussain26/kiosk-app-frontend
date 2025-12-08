@@ -4,12 +4,11 @@ import { useState, useRef } from "react";
 import ReactCrop, { Crop, PixelCrop } from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
 import { Button } from "@/components/ui/button";
-import { Slider } from "@/components/ui/slider";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ZoomIn, ZoomOut, RotateCw } from "lucide-react";
-import { ProgressSteps } from "@/components/global/progress-steps";
 import PostaFooter from "@/components/global/posta-footer";
+import { ProgressSteps } from "@/components/global/progress-steps";
 import { useCropStore } from "@/stores/crop-store";
+import Image from "next/image";
 
 const TO_RADIANS = Math.PI / 180;
 
@@ -69,7 +68,6 @@ const CropImage = () => {
   const imageSrc = decodeURIComponent(searchParams.get("image") || "");
   const sessionId = searchParams.get("session") || "";
 
-  // ✅ Added Zustand store hook
   const { setCroppedImage } = useCropStore();
 
   const [crop, setCrop] = useState<Crop>({
@@ -108,7 +106,6 @@ const CropImage = () => {
     setError("");
 
     try {
-      // Draw cropped image onto canvas
       await canvasPreview(
         imgRef.current,
         previewCanvasRef.current,
@@ -117,8 +114,7 @@ const CropImage = () => {
         rotation
       );
 
-      // Create a temporary canvas to scale down the image
-      const scaleFactor = 0.5; // 50% of original size
+      const scaleFactor = 0.5;
       const tempCanvas = document.createElement("canvas");
       tempCanvas.width = previewCanvasRef.current.width * scaleFactor;
       tempCanvas.height = previewCanvasRef.current.height * scaleFactor;
@@ -134,13 +130,9 @@ const CropImage = () => {
         tempCanvas.height
       );
 
-      // Convert to JPEG with lower quality (0.7)
       const croppedImage = tempCanvas.toDataURL("image/jpeg", 0.7);
-
-      // ✅ Changed: Save to Zustand store instead of sessionStorage
       setCroppedImage(croppedImage);
 
-      // Navigate to edit page
       setTimeout(() => {
         router.push(`/kiosk/edit?session=${sessionId}`);
       }, 100);
@@ -177,7 +169,7 @@ const CropImage = () => {
       </h2>
 
       {/* Crop Area */}
-      <div className="w-[280px] mx-auto mt-6">
+      <div className="w-[280px] mx-auto mt-6 flex justify-center items-center">
         <ReactCrop
           crop={crop}
           onChange={(c) => setCrop(c)}
@@ -185,19 +177,26 @@ const CropImage = () => {
           aspect={3 / 4}
           className="max-w-full"
         >
-          <img
+          <Image
             ref={imgRef}
             alt="Crop preview"
             src={imageSrc}
+            width={800}
+            height={1200}
             onLoad={handleImageLoad}
             onError={handleImageError}
             style={{
               transform: `scale(${scale}) rotate(${rotation}deg)`,
               maxWidth: "100%",
-              maxHeight: "70vh",
+              maxHeight: "50vh",
+              width: "auto",
+              height: "auto",
               objectFit: "contain",
             }}
+            className="w-auto h-auto"
             crossOrigin="anonymous"
+            unoptimized
+            priority
           />
         </ReactCrop>
       </div>
@@ -210,15 +209,19 @@ const CropImage = () => {
         }}
       />
 
-      {/* Controls Footer */}
+      {/* Error Message */}
+      {error && (
+        <div className="text-center text-red-500 text-sm mt-2">{error}</div>
+      )}
 
+      {/* Controls Footer */}
       <div className="container mx-auto px-6 py-6">
         <div className="max-w-2xl mx-auto space-y-6">
           {/* Action Buttons */}
           <div className="flex gap-4 pt-2">
             <Button
               variant="outline"
-              className="flex-1 h-12 text-md font-bold rounded-full border-[E4E4E7] text-primary hover:bg-gray-50  bg-white"
+              className="flex-1 h-12 text-md font-bold rounded-full border-[E4E4E7] text-primary hover:bg-gray-50 bg-white"
               onClick={handleCancel}
               disabled={isProcessing}
             >
@@ -234,6 +237,7 @@ const CropImage = () => {
           </div>
         </div>
       </div>
+
       {/* Footer */}
       <PostaFooter />
     </div>

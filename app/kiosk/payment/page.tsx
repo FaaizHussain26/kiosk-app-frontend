@@ -42,7 +42,7 @@ export default function PaymentPage() {
         </p>
 
         <h2 className="text-center mt-2 text-4xl font-bold text-primary leading-tight">
-          $3.50
+          $3.93
         </h2>
 
         <Button
