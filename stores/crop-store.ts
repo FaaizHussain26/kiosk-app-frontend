@@ -3,10 +3,13 @@ import { persist, createJSONStorage } from "zustand/middleware";
 
 type FilterType = "original" | "warm" | "cool" | "pastel" | "mono" | "sepia";
 
-interface CropStore {
+interface CropState {
   croppedImage: string | null;
   brightness: number;
   selectedFilter: FilterType;
+}
+
+interface CropActions {
   setCroppedImage: (img: string | null) => void;
   setBrightness: (value: number) => void;
   setSelectedFilter: (filter: FilterType) => void;
@@ -15,27 +18,39 @@ interface CropStore {
   resetAll: () => void;
 }
 
+type CropStore = CropState & CropActions;
+
+const initialState: CropState = {
+  croppedImage: null,
+  brightness: 100,
+  selectedFilter: "original",
+};
+
 export const useCropStore = create<CropStore>()(
   persist(
     (set) => ({
-      croppedImage: null,
-      brightness: 100,
-      selectedFilter: "original",
+      ...initialState,
+
       setCroppedImage: (img) => set({ croppedImage: img }),
+
       setBrightness: (value) => set({ brightness: value }),
+
       setSelectedFilter: (filter) => set({ selectedFilter: filter }),
+
       clearCroppedImage: () => set({ croppedImage: null }),
-      resetFilters: () => set({ brightness: 100, selectedFilter: "original" }),
-      resetAll: () =>
+
+      resetFilters: () =>
         set({
+          brightness: initialState.brightness,
+          selectedFilter: initialState.selectedFilter,
           croppedImage: null,
-          brightness: 100,
-          selectedFilter: "original",
         }),
+
+      resetAll: () => set(initialState),
     }),
     {
-      name: "crop-storage", // unique name for sessionStorage key
-      storage: createJSONStorage(() => sessionStorage), // using sessionStorage
+      name: "crop-storage",
+      storage: createJSONStorage(() => sessionStorage),
     }
   )
 );
