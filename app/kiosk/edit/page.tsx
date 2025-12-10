@@ -46,12 +46,15 @@ export default function EditPage() {
 
   const [isFlipped, setIsFlipped] = useState(false);
 
-  const API_BASE_URL =
-    process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
+  // const API_BASE_URL =
+  //   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
 
-  const imageUrl = sessionId
-    ? `${API_BASE_URL}/session/${sessionId}/image`
-    : "https://images.pexels.com/photos/34934422/pexels-photo-34934422.jpeg";
+  // const imageUrl = sessionId
+  //   ? `${API_BASE_URL}/session/${sessionId}/image`
+  //   : "https://images.pexels.com/photos/34934422/pexels-photo-34934422.jpeg";
+
+  const imageUrl =
+    "https://images.pexels.com/photos/34934422/pexels-photo-34934422.jpeg";
 
   const handleReset = () => {
     resetFilters();
