@@ -56,6 +56,9 @@ export default function EditPage() {
   const imageUrl =
     "https://images.pexels.com/photos/34934422/pexels-photo-34934422.jpeg";
 
+  // const imageUrl =
+  //   "https://images.pexels.com/photos/34934422/pexels-photo-34934422.jpeg";
+
   const handleReset = () => {
     resetFilters();
   };
