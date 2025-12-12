@@ -64,7 +64,7 @@ export default function ReviewPage() {
           {/* Postcard Preview - Front and Back Side by Side */}
           <div className="flex gap-4 mx-auto">
             {/* Back - Message Side */}
-            <div className="w-[340px]">
+            <div>
               <div
                 className="bg-card shadow-lg border border-border overflow-hidden"
                 style={{ width: "330px", height: "470px" }}
@@ -76,6 +76,7 @@ export default function ReviewPage() {
                     fill
                     className="object-contain"
                     priority
+                    unoptimized
                   />
                 </div>
               </div>
@@ -84,11 +85,11 @@ export default function ReviewPage() {
             {/* Front - Photo Side */}
             <div className="w-[340px] ">
               <div
-                className="bg-card shadow-lg p-4 border border-border"
+                className="bg-card shadow-lg p-3 border border-border"
                 style={{ width: "330px", height: "470px" }}
               >
                 <div
-                  className="w-full h-full overflow-hidden relative"
+                  className="w-full overflow-hidden relative h-[400px] flex items-center justify-center bg-gray-100"
                   style={{ filter: combinedFilter }}
                 >
                   <Image
@@ -96,6 +97,17 @@ export default function ReviewPage() {
                     alt="Photo preview"
                     fill
                     className="object-cover"
+                    unoptimized
+                    priority
+                  />
+                </div>
+
+                <div className="flex justify-center mt-2">
+                  <Image
+                    src="/images/dbg-logo.png"
+                    alt="DBG Logo"
+                    width={55}
+                    height={55}
                     unoptimized
                     priority
                   />

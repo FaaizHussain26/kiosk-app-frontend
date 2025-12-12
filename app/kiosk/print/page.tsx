@@ -78,18 +78,30 @@ export default function PrintPage() {
       <div className="w-[325px] mx-auto mt-8 flex flex-col item-center justify-center z-100">
         <div className="flex items-center justify-center ">
           <div
-            className="bg-card shadow-lg p-4 border border-border"
-            style={{ width: "280px", height: "420px" }}
+            className="bg-card shadow-lg p-3 border border-border"
+            style={{ width: "285px", height: "420px" }}
           >
             <div
-              className="w-full h-full overflow-hidden relative"
+              className="w-full overflow-hidden relative h-[350px]"
               style={{ filter: combinedFilter }}
             >
+              <div>
+                <Image
+                  src={imageUrl}
+                  alt="Photo preview"
+                  fill
+                  className="object-cover"
+                  unoptimized
+                  priority
+                />
+              </div>
+            </div>
+            <div className="flex justify-center mt-2">
               <Image
-                src={imageUrl}
-                alt="Photo preview"
-                fill
-                className="object-cover"
+                src="/images/dbg-logo.png"
+                alt="DBG Logo"
+                width={55}
+                height={55}
                 unoptimized
                 priority
               />

@@ -120,7 +120,7 @@ export default function EditPage() {
       <ProgressSteps currentStep={3} />
 
       {/* Main Content */}
-      <div className="w-full max-w-5xl mx-auto px-4 py-8">
+      <div className="w-full max-w-5xl mx-auto px-3 py-8">
         <div className="flex flex-col lg:flex-row gap-8 items-start justify-center">
           {/* Postcard Preview */}
           <div className="w-[380px] mx-auto">
@@ -131,19 +131,28 @@ export default function EditPage() {
               <div className={`flip-card-inner ${isFlipped ? "flipped" : ""}`}>
                 {/* Front - Photo Side */}
                 <div
-                  className="flip-card-front bg-card shadow-lg p-4 border border-border"
+                  className="flip-card-front bg-card shadow-lg p-3 border border-border"
                   style={{ width: "384px", height: "576px" }}
                 >
                   <div
-                    className="w-full h-full overflow-hidden relative"
+                    className="w-full overflow-hidden relative h-[505px] flex items-center justify-center "
                     style={{ filter: combinedFilter }}
                   >
                     <Image
                       src={croppedImage || imageUrl}
                       alt="Photo preview"
-                      width={384}
-                      height={576}
-                      className="w-full h-full object-cover"
+                      fill
+                      className="object-cover"
+                      unoptimized
+                      priority
+                    />
+                  </div>
+                  <div className="flex justify-center mt-2">
+                    <Image
+                      src="/images/dbg-logo.png"
+                      alt="DBG Logo"
+                      width={55}
+                      height={55}
                       unoptimized
                       priority
                     />

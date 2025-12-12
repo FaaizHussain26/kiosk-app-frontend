@@ -72,9 +72,9 @@ const CropImage = () => {
 
   const [crop, setCrop] = useState<Crop>({
     unit: "%",
-    width: 75,
+    width: 100,
     height: 100,
-    x: 12.5,
+    x: 0,
     y: 0,
   });
 
