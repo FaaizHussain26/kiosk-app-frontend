@@ -75,7 +75,7 @@ export default function PrintPage() {
         </div>
       </div>
 
-      <div className="w-[325px] mx-auto mt-8 flex flex-col item-center justify-center z-100">
+      <div className="w-[325px] mx-auto mt-8 flex flex-col item-center justify-center z-20">
         <div className="flex items-center justify-center ">
           <div
             className="bg-card shadow-lg p-3 border border-border"
@@ -111,7 +111,7 @@ export default function PrintPage() {
         <Button
           variant="outline"
           className="h-12 mt-5 border-[E4E4E7] text-primary hover:bg-gray-50 bg-white w-full
-           rounded-full text-md font-bold flex item-center justify-center"
+           rounded-full text-md font-bold flex item-center justify-center hover:text-none"
           size="lg"
           onClick={handleNewOrder}
         >

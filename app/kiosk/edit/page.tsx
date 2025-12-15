@@ -42,6 +42,7 @@ export default function EditPage() {
     setBrightness,
     setSelectedFilter,
     resetFilters,
+    resetAll,
   } = useCropStore();
 
   const [isFlipped, setIsFlipped] = useState(false);
@@ -64,7 +65,10 @@ export default function EditPage() {
   };
 
   const handleBack = () => {
-    router.push(`/kiosk/qr?session=${sessionId}`);
+    resetAll();
+    sessionStorage.removeItem("lastSessionId");
+
+    router.push("/");
   };
 
   const handleCrop = () => {
@@ -311,7 +315,7 @@ export default function EditPage() {
               </Button>
               <Button
                 variant="outline"
-                className="h-12 border-[#E4E4E7] text-primary hover:bg-gray-50 bg-white w-full rounded-full text-md font-bold"
+                className="h-12 hover:text-none border-[#E4E4E7] text-primary hover:bg-gray-50 bg-white w-full rounded-full text-md font-bold"
                 size="lg"
                 onClick={handleBack}
               >

@@ -110,6 +110,9 @@ export default function QRPage() {
   };
 
   const handleBack = () => {
+    resetAll();
+    sessionStorage.removeItem("lastSessionId");
+
     router.push("/");
   };
 
