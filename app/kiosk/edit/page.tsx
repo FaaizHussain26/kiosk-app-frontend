@@ -42,6 +42,7 @@ export default function EditPage() {
     setBrightness,
     setSelectedFilter,
     resetFilters,
+    resetAll,
   } = useCropStore();
 
   const [isFlipped, setIsFlipped] = useState(false);
@@ -64,7 +65,10 @@ export default function EditPage() {
   };
 
   const handleBack = () => {
-    router.push(`/kiosk/qr?session=${sessionId}`);
+    resetAll();
+    sessionStorage.removeItem("lastSessionId");
+
+    router.push("/");
   };
 
   const handleCrop = () => {
