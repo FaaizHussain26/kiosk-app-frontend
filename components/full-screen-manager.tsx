@@ -2,6 +2,18 @@
 
 import { useEffect, useState } from "react";
 
+interface DocumentElementWithFullscreen extends HTMLElement {
+  mozRequestFullScreen?: () => Promise<void>;
+  webkitRequestFullscreen?: () => Promise<void>;
+  msRequestFullscreen?: () => Promise<void>;
+}
+
+interface DocumentWithFullscreen extends Document {
+  mozFullScreenElement?: Element;
+  webkitFullscreenElement?: Element;
+  msFullscreenElement?: Element;
+}
+
 export function FullscreenManager() {
   const [showPrompt, setShowPrompt] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
@@ -19,19 +31,19 @@ export function FullscreenManager() {
           return;
         }
 
-        const elem = document.documentElement;
+        const elem = document.documentElement as DocumentElementWithFullscreen;
 
         if (elem.requestFullscreen) {
           await elem.requestFullscreen();
           setShowPrompt(false);
-        } else if ((elem as any).webkitRequestFullscreen) {
-          await (elem as any).webkitRequestFullscreen();
+        } else if (elem.webkitRequestFullscreen) {
+          await elem.webkitRequestFullscreen();
           setShowPrompt(false);
-        } else if ((elem as any).mozRequestFullScreen) {
-          await (elem as any).mozRequestFullScreen();
+        } else if (elem.mozRequestFullScreen) {
+          await elem.mozRequestFullScreen();
           setShowPrompt(false);
-        } else if ((elem as any).msRequestFullscreen) {
-          await (elem as any).msRequestFullscreen();
+        } else if (elem.msRequestFullscreen) {
+          await elem.msRequestFullscreen();
           setShowPrompt(false);
         }
       } catch (err) {
@@ -81,16 +93,16 @@ export function FullscreenManager() {
 
   const handleEnterFullscreen = async () => {
     try {
-      const elem = document.documentElement;
+      const elem = document.documentElement as DocumentElementWithFullscreen;
 
       if (elem.requestFullscreen) {
         await elem.requestFullscreen();
-      } else if ((elem as any).webkitRequestFullscreen) {
-        await (elem as any).webkitRequestFullscreen();
-      } else if ((elem as any).mozRequestFullScreen) {
-        await (elem as any).mozRequestFullScreen();
-      } else if ((elem as any).msRequestFullscreen) {
-        await (elem as any).msRequestFullscreen();
+      } else if (elem.webkitRequestFullscreen) {
+        await elem.webkitRequestFullscreen();
+      } else if (elem.mozRequestFullScreen) {
+        await elem.mozRequestFullScreen();
+      } else if (elem.msRequestFullscreen) {
+        await elem.msRequestFullscreen();
       }
 
       // Remember that user has interacted
@@ -108,10 +120,10 @@ export function FullscreenManager() {
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 text-center">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 text-center z-2000">
         <div className="mb-6">
           <svg
-            className="w-16 h-16 mx-auto text-blue-500"
+            className="w-16 h-16 mx-auto text-primary"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -125,18 +137,18 @@ export function FullscreenManager() {
           </svg>
         </div>
 
-        <h2 className="text-2xl font-bold text-gray-900 mb-3">
+        <h2 className="text-2xl font-bold text-[#18181B] mb-3">
           Enter Fullscreen Mode
         </h2>
 
-        <p className="text-gray-600 mb-8">
+        <p className="text-[#52525B] mb-8">
           For the best experience, this application works in fullscreen mode.
           Click below to continue.
         </p>
 
         <button
           onClick={handleEnterFullscreen}
-          className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-4 px-6 rounded-xl transition-colors duration-200 shadow-lg hover:shadow-xl"
+          className="w-full bg-primary text-white font-semibold py-4 px-6 rounded-full transition-colors duration-200 shadow-lg hover:shadow-xl"
         >
           Enter Fullscreen
         </button>

@@ -36,7 +36,7 @@ export default function PaymentPage() {
         </div>
       </div>
 
-      <div className="w-full mt-70 max-w-[1070px] mx-auto px-4 py-8 flex flex-col justify-center items-center z-100">
+      <div className="w-full mt-70 max-w-[1070px] mx-auto px-4 py-8 flex flex-col justify-center items-center z-20">
         <div className="w-full max-w-[1070px] mx-auto flex flex-col justify-center items-center">
           <p className="text-center text-[#71717A] text-sm font-medium mb-4">
             Waiting for payment...
@@ -73,7 +73,7 @@ export default function PaymentPage() {
           {/* Back Button */}
           <Button
             variant="outline"
-            className="h-12 mt-4 border-[E4E4E7] text-primary hover:bg-gray-50 bg-white w-[120px] rounded-full text-md font-bold"
+            className="h-12 mt-4 border-[E4E4E7] text-primary hover:bg-gray-50 bg-white w-[120px] rounded-full text-md font-bold hover:text-none"
             size="lg"
             onClick={handleBack}
           >

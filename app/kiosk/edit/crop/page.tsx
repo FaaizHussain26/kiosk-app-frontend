@@ -177,14 +177,13 @@ const CropImage = () => {
           aspect={3 / 4}
           className="max-w-full"
         >
-          <Image
+          <img
             ref={imgRef}
             alt="Crop preview"
             src={imageSrc}
-            width={800}
-            height={1200}
             onLoad={handleImageLoad}
             onError={handleImageError}
+            crossOrigin="anonymous"
             style={{
               transform: `scale(${scale}) rotate(${rotation}deg)`,
               maxWidth: "100%",
@@ -193,10 +192,6 @@ const CropImage = () => {
               height: "auto",
               objectFit: "contain",
             }}
-            className="w-auto h-auto"
-            crossOrigin="anonymous"
-            unoptimized
-            priority
           />
         </ReactCrop>
       </div>
@@ -221,7 +216,7 @@ const CropImage = () => {
           <div className="flex gap-4 pt-2">
             <Button
               variant="outline"
-              className="flex-1 h-12 text-md font-bold rounded-full border-[E4E4E7] text-primary hover:bg-gray-50 bg-white"
+              className="flex-1 h-12 text-md font-bold rounded-full border-[E4E4E7] text-primary  hover:bg-gray-50 bg-white hover:text-none"
               onClick={handleCancel}
               disabled={isProcessing}
             >
