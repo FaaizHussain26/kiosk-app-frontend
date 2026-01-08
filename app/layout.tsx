@@ -12,7 +12,7 @@ const nationalPark = National_Park({
 export const metadata: Metadata = {
   title: "Posta",
   description: "Posta - The best way to manage your photos",
-  viewport: "width=device-width, initial-scale=1", // ✅ Added here
+  viewport: "width=device-width, initial-scale=1", 
 };
 +9;
 

@@ -17,8 +17,30 @@ interface DocumentWithFullscreen extends Document {
 export function FullscreenManager() {
   const [showPrompt, setShowPrompt] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
+    // Check if device is mobile
+    const checkMobile = () => {
+      const isMobileDevice =
+        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+          navigator.userAgent
+        ) || window.innerWidth < 768;
+      setIsMobile(isMobileDevice);
+    };
+
+    checkMobile();
+
+    // Also check on resize
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  useEffect(() => {
+    // Don't run fullscreen logic on mobile
+    if (isMobile) {
+      return;
+    }
     // Check if user has already interacted
     const interacted = sessionStorage.getItem("fullscreen_interacted");
     if (interacted) {
@@ -89,7 +111,12 @@ export function FullscreenManager() {
         handleFullscreenChange
       );
     };
-  }, [hasInteracted]);
+  }, [hasInteracted, isMobile]);
+
+  // Don't render anything on mobile devices
+  if (isMobile) {
+    return null;
+  }
 
   const handleEnterFullscreen = async () => {
     try {
