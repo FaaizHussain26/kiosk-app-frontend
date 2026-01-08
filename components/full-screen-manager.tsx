@@ -20,28 +20,35 @@ export function FullscreenManager() {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    // Check if device is mobile
     const checkMobile = () => {
-      const isMobileDevice =
-        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-          navigator.userAgent
-        ) || window.innerWidth < 768;
-      setIsMobile(isMobileDevice);
+      const userAgent = navigator.userAgent;
+      const width = window.innerWidth;
+
+      const isIPad =
+        /iPad/.test(userAgent) ||
+        (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
+      const isAndroidTablet = /Android/i.test(userAgent) && width >= 600;
+
+      const isMobilePhone =
+        /iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent) ||
+        (/Android/i.test(userAgent) && width < 600) ||
+        (width < 600 && !isIPad && !isAndroidTablet);
+
+      setIsMobile(isMobilePhone);
     };
 
     checkMobile();
 
-    // Also check on resize
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
   useEffect(() => {
-    // Don't run fullscreen logic on mobile
     if (isMobile) {
       return;
     }
-    // Check if user has already interacted
+
     const interacted = sessionStorage.getItem("fullscreen_interacted");
     if (interacted) {
       setHasInteracted(true);
@@ -69,14 +76,12 @@ export function FullscreenManager() {
           setShowPrompt(false);
         }
       } catch (err) {
-        // If automatic fullscreen fails, show the prompt
         if (!hasInteracted) {
           setShowPrompt(true);
         }
       }
     };
 
-    // Try to enter fullscreen immediately if user has interacted before
     if (interacted) {
       enterFullscreen();
     } else {
@@ -113,7 +118,7 @@ export function FullscreenManager() {
     };
   }, [hasInteracted, isMobile]);
 
-  // Don't render anything on mobile devices
+  // Don't render anything on mobile phones
   if (isMobile) {
     return null;
   }
