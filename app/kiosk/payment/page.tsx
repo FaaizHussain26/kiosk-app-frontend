@@ -63,35 +63,63 @@ export default function PaymentPage() {
   const [imageLoaded, setImageLoaded] = useState(false);
 
   const handlePrint = useCallback(() => {
-    // Ensure image is loaded before printing (fixes blank print on mobile)
-    if (printImgRef.current?.complete && printImgRef.current.naturalWidth > 0) {
+    const img = printImgRef.current;
+    if (!img || !img.complete || img.naturalWidth === 0) return;
+
+    // Use a dedicated print window - single image, no headers/footers, no duplicate content
+    const printDoc = `
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Print Postcard</title>
+<style>
+  * { margin: 0; padding: 0; }
+  html, body { width: 4.25in; height: 6in; overflow: hidden; background: white; }
+  .img-wrap { width: 4.25in; height: 6in; filter: ${combinedFilter || "none"}; }
+  img {
+    width: 4.25in;
+    height: 6in;
+    object-fit: contain;
+    display: block;
+  }
+  @page { margin: 0; size: 4.25in 6in; }
+</style>
+</head>
+<body>
+<div class="img-wrap"><img src="${img.src}" alt="Postcard" /></div>
+</body>
+</html>`;
+
+    const printWin = window.open("", "_blank");
+    if (!printWin) {
+      // Fallback if popup blocked (e.g. some mobile)
       window.print();
-    } else {
-      // Wait for image to load, then print
-      const img = printImgRef.current;
-      if (img) {
-        const onLoad = () => {
-          img.removeEventListener("load", onLoad);
-          setImageLoaded(true);
-          requestAnimationFrame(() => {
-            requestAnimationFrame(() => window.print());
-          });
-        };
-        if (img.complete) {
-          onLoad();
-        } else {
-          img.addEventListener("load", onLoad);
-        }
-      } else {
-        window.print();
-      }
+      return;
     }
-  }, []);
+    printWin.document.write(printDoc);
+    printWin.document.close();
+
+    const doPrint = () => {
+      printWin.focus();
+      printWin.print();
+      printWin.onafterprint = () => printWin.close();
+    };
+
+    const printImg = printWin.document.querySelector("img");
+    if (printImg && (printImg as HTMLImageElement).complete) {
+      doPrint();
+    } else if (printImg) {
+      (printImg as HTMLImageElement).onload = doPrint;
+    } else {
+      printWin.onload = doPrint;
+    }
+  }, [combinedFilter]);
 
   return (
     <>
       <style jsx global>{`
-        /* Keep print area in DOM and rendered (invisible) so image loads - fixes blank print on mobile */
+        /* Keep print area in DOM and rendered (invisible) so image loads */
         .print-area {
           position: fixed;
           left: 0;
@@ -106,10 +134,20 @@ export default function PaymentPage() {
         .print-area img {
           width: 100%;
           height: 100%;
-          object-fit: cover;
+          object-fit: contain;
           display: block;
         }
         @media print {
+          /* Single page, no headers/footers, exact postcard size */
+          html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 4.25in !important;
+            height: 6in !important;
+            overflow: hidden !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
           body * {
             visibility: hidden;
           }
@@ -128,11 +166,15 @@ export default function PaymentPage() {
             z-index: 99999 !important;
             background: white !important;
             opacity: 1 !important;
+            page-break-after: avoid !important;
+            page-break-inside: avoid !important;
           }
           .print-area img {
             width: 4.25in !important;
             height: 6in !important;
-            object-fit: cover !important;
+            max-width: 4.25in !important;
+            max-height: 6in !important;
+            object-fit: contain !important;
           }
           @page {
             margin: 0;
