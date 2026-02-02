@@ -24,7 +24,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${nationalPark.variable} antialiased`}>
-        <FullscreenManager />
+        {/* <FullscreenManager /> */}
         <ReactQueryProvider>{children}</ReactQueryProvider>
       </body>
     </html>

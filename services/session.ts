@@ -38,4 +38,37 @@ export const uploadSessionImage = async (params: {
   return data;
 };
 
+export interface CreatePaymentIntentResponse {
+  clientSecret: string;
+  paymentIntentId: string;
+  amount: number;
+  currency: string;
+}
+
+export const createPaymentIntent = async (
+  sessionId: string,
+): Promise<CreatePaymentIntentResponse> => {
+  const { data } = await api.post<CreatePaymentIntentResponse>(
+    `/session/${sessionId}/payment-intent`,
+  );
+  return data;
+};
+
+export const confirmPaymentOnServer = async (params: {
+  sessionId: string;
+  paymentIntentId: string;
+}): Promise<{ status: string }> => {
+  const { data } = await api.post<{ status: string }>(
+    `/session/${params.sessionId}/payment-confirm`,
+    {
+      paymentIntentId: params.paymentIntentId,
+    },
+  );
+  return data;
+};
+
+export const requestPrint = async (sessionId: string): Promise<void> => {
+  await api.post(`/session/${sessionId}/print`);
+};
+
 
