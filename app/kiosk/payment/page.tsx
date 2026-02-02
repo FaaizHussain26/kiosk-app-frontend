@@ -5,7 +5,7 @@ import { ProgressSteps } from "@/components/global/progress-steps";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useMemo, useRef } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useCropStore } from "@/stores/crop-store";
 // import { StripeProvider } from "@/components/StripeProvider";
 // import {
@@ -59,16 +59,55 @@ export default function PaymentPage() {
     router.push(`/kiosk/review?session=${sessionId}`);
   }, [router, sessionId]);
 
+  const printImgRef = useRef<HTMLImageElement>(null);
+  const [imageLoaded, setImageLoaded] = useState(false);
+
   const handlePrint = useCallback(() => {
-    // Trigger browser print dialog
-    window.print();
+    // Ensure image is loaded before printing (fixes blank print on mobile)
+    if (printImgRef.current?.complete && printImgRef.current.naturalWidth > 0) {
+      window.print();
+    } else {
+      // Wait for image to load, then print
+      const img = printImgRef.current;
+      if (img) {
+        const onLoad = () => {
+          img.removeEventListener("load", onLoad);
+          setImageLoaded(true);
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => window.print());
+          });
+        };
+        if (img.complete) {
+          onLoad();
+        } else {
+          img.addEventListener("load", onLoad);
+        }
+      } else {
+        window.print();
+      }
+    }
   }, []);
 
   return (
     <>
       <style jsx global>{`
+        /* Keep print area in DOM and rendered (invisible) so image loads - fixes blank print on mobile */
         .print-area {
-          display: none;
+          position: fixed;
+          left: 0;
+          top: 0;
+          width: 408px;
+          height: 576px;
+          opacity: 0;
+          pointer-events: none;
+          z-index: -1;
+          overflow: hidden;
+        }
+        .print-area img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          display: block;
         }
         @media print {
           body * {
@@ -76,24 +115,28 @@ export default function PaymentPage() {
           }
           .print-area,
           .print-area * {
-            visibility: visible;
-            display: block !important;
+            visibility: visible !important;
           }
           .print-area {
-            position: fixed;
-            left: 0;
-            top: 0;
-            width: 100vw;
-            height: 100vh;
-            display: flex !important;
-            align-items: center;
-            justify-content: center;
-            background: white;
-            z-index: 9999;
+            position: fixed !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 4.25in !important;
+            height: 6in !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            z-index: 99999 !important;
+            background: white !important;
+            opacity: 1 !important;
+          }
+          .print-area img {
+            width: 4.25in !important;
+            height: 6in !important;
+            object-fit: cover !important;
           }
           @page {
             margin: 0;
-            size: auto;
+            size: 4.25in 6in;
           }
         }
       `}</style>
@@ -157,8 +200,9 @@ export default function PaymentPage() {
               className="w-full rounded-full h-12 text-md font-bold max-w-[250px]"
               size="lg"
               onClick={handlePrint}
+              disabled={!imageLoaded}
             >
-              Pay and Print
+              {imageLoaded ? "Pay and Print" : "Loading image…"}
             </Button>
 
             {/* Back Button */}
@@ -173,35 +217,16 @@ export default function PaymentPage() {
           </div>
         </div>
 
-        {/* Hidden print area - only visible when printing */}
+        {/* Print area: off-screen so image loads, only image at 4.25"x6" when printing */}
         <div ref={printRef} className="print-area">
-          <div
-            className="bg-card shadow-lg p-3 border border-border"
-            style={{ width: "384px", height: "576px" }}
-          >
-            <div
-              className="w-full overflow-hidden relative h-[505px] flex items-center justify-center"
-              style={{ filter: combinedFilter }}
-            >
-              <Image
-                src={imageUrl}
-                alt="Photo to print"
-                fill
-                className="object-cover"
-                unoptimized
-                priority
-              />
-            </div>
-            <div className="flex justify-center mt-2">
-              <Image
-                src="/images/dbg-logo.png"
-                alt="DBG Logo"
-                width={55}
-                height={55}
-                unoptimized
-                priority
-              />
-            </div>
+          <div style={{ filter: combinedFilter, width: "100%", height: "100%" }}>
+            <img
+              ref={printImgRef}
+              src={imageUrl}
+              alt="Postcard"
+              onLoad={() => setImageLoaded(true)}
+              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            />
           </div>
         </div>
 
