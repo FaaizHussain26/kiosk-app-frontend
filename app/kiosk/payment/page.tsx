@@ -74,16 +74,22 @@ export default function PaymentPage() {
 <meta charset="utf-8">
 <title>Print Postcard</title>
 <style>
-  * { margin: 0; padding: 0; }
-  html, body { width: 4.25in; height: 6in; overflow: hidden; background: white; }
-  .img-wrap { width: 4.25in; height: 6in; filter: ${combinedFilter || "none"}; }
+  * { margin: 0; padding: 0; border: none; outline: none; box-sizing: border-box; }
+  html, body { width: 4.25in; height: 6in; overflow: hidden; background: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .img-wrap { width: 4.25in; height: 6in; filter: ${combinedFilter || "none"}; border: none; }
   img {
     width: 4.25in;
     height: 6in;
     object-fit: contain;
     display: block;
+    border: none;
+    outline: none;
   }
   @page { margin: 0; size: 4.25in 6in; }
+  @media print {
+    html, body { margin: 0 !important; padding: 0 !important; border: none !important; }
+    .img-wrap, img { border: none !important; }
+  }
 </style>
 </head>
 <body>
@@ -246,6 +252,10 @@ export default function PaymentPage() {
             >
               {imageLoaded ? "Pay and Print" : "Loading image…"}
             </Button>
+
+            <p className="text-xs text-[#71717A] mt-2 text-center max-w-[280px]">
+              Tip: In the print dialog, tap Options and turn off &quot;Headers and Footers&quot; for a clean print.
+            </p>
 
             {/* Back Button */}
             <Button
