@@ -74,6 +74,8 @@ export default function PaymentPage() {
 <meta charset="utf-8">
 <title>Print Postcard</title>
 <style>
+  @page { size: auto;  margin: 0mm; }
+
   * { margin: 0; padding: 0; border: none; outline: none; box-sizing: border-box; }
   html, body { width: 4.25in; height: 6in; overflow: hidden; background: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .img-wrap { width: 4.25in; height: 6in; filter: ${combinedFilter || "none"}; border: none; }
