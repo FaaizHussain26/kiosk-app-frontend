@@ -74,20 +74,36 @@ export default function PaymentPage() {
 <meta charset="utf-8">
 <title>Print Postcard</title>
 <style>
-  @page { size: auto;  margin: 0mm; }
-
   * { margin: 0; padding: 0; border: none; outline: none; box-sizing: border-box; }
-  html, body { width: 4.25in; height: 6in; overflow: hidden; background: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .img-wrap { width: 4.25in; height: 6in; filter: ${combinedFilter || "none"}; border: none; }
+  html, body {
+    width: 100%;
+    height: 100%;
+    min-width: 4.25in;
+    min-height: 6in;
+    overflow: hidden;
+    background: white;
+    position: relative;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .img-wrap {
+    width: 100%;
+    height: 100%;
+    filter: ${combinedFilter || "none"};
+    border: none;
+  }
   img {
-    width: 4.25in;
-    height: 6in;
+    width: 100%;
+    height: 100%;
     object-fit: contain;
     display: block;
     border: none;
     outline: none;
   }
-  @page { margin: 0; size: 4.25in 6in; }
+  @page {
+    margin: 10px;
+    size: 4.25in 6in;
+  }
   @media print {
     html, body { margin: 0 !important; padding: 0 !important; border: none !important; }
     .img-wrap, img { border: none !important; }
