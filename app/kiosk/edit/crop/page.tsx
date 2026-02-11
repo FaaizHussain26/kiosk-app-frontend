@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import ReactCrop, { Crop, PixelCrop } from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
 import { Button } from "@/components/ui/button";
@@ -10,56 +10,89 @@ import { ProgressSteps } from "@/components/global/progress-steps";
 import { useCropStore } from "@/stores/crop-store";
 import Image from "next/image";
 
-const TO_RADIANS = Math.PI / 180;
+// Max canvas dimension to prevent exceeding browser limits on HiDPI displays.
+// Most browsers cap at ~16384px, but keeping conservative avoids silent failures
+// where toDataURL() returns an empty "data:," string (= black image).
+const MAX_CANVAS_DIM = 4096;
 
 async function canvasPreview(
   image: HTMLImageElement,
   canvas: HTMLCanvasElement,
   crop: PixelCrop,
   scale = 1,
-  rotate = 0
+  rotate = 0,
 ) {
   const ctx = canvas.getContext("2d");
   if (!ctx) {
     throw new Error("No 2d context");
   }
 
+  // Validate image has real dimensions (not still loading or broken)
+  if (image.naturalWidth === 0 || image.naturalHeight === 0) {
+    throw new Error("Image has zero dimensions — it may not be fully loaded");
+  }
+
   const scaleX = image.naturalWidth / image.width;
   const scaleY = image.naturalHeight / image.height;
-  const pixelRatio = window.devicePixelRatio || 1;
 
-  canvas.width = Math.floor(crop.width * scaleX * pixelRatio);
-  canvas.height = Math.floor(crop.height * scaleY * pixelRatio);
+  // Calculate crop area at the image's natural resolution.
+  // NOTE: Do NOT multiply by devicePixelRatio here — we are generating a data URL
+  // for storage, not rendering to screen. pixelRatio can make canvases exceed
+  // browser limits (e.g. 8000×6000 × 3 = 24000px), causing toDataURL() to
+  // silently return "data:," which renders as a black image.
+  let outW = Math.floor(crop.width * scaleX);
+  let outH = Math.floor(crop.height * scaleY);
 
-  ctx.scale(pixelRatio, pixelRatio);
+  // Cap dimensions to prevent exceeding browser canvas limits
+  if (outW > MAX_CANVAS_DIM || outH > MAX_CANVAS_DIM) {
+    const ratio = Math.min(MAX_CANVAS_DIM / outW, MAX_CANVAS_DIM / outH);
+    outW = Math.floor(outW * ratio);
+    outH = Math.floor(outH * ratio);
+  }
+
+  canvas.width = outW;
+  canvas.height = outH;
+
   ctx.imageSmoothingQuality = "high";
 
   const cropX = crop.x * scaleX;
   const cropY = crop.y * scaleY;
-  const rotateRads = rotate * TO_RADIANS;
-  const centerX = image.naturalWidth / 2;
-  const centerY = image.naturalHeight / 2;
+  const cropW = crop.width * scaleX;
+  const cropH = crop.height * scaleY;
 
-  ctx.save();
-  ctx.translate(-cropX, -cropY);
-  ctx.translate(centerX, centerY);
-  ctx.rotate(rotateRads);
-  ctx.scale(scale, scale);
-  ctx.translate(-centerX, -centerY);
+  if (rotate === 0 && scale === 1) {
+    // Fast path: simple crop via drawImage source/dest rects
+    ctx.drawImage(image, cropX, cropY, cropW, cropH, 0, 0, outW, outH);
+  } else {
+    // General path: supports rotation and zoom
+    const outputScale = outW / cropW; // accounts for any dimension capping
+    ctx.scale(outputScale, outputScale);
 
-  ctx.drawImage(
-    image,
-    0,
-    0,
-    image.naturalWidth,
-    image.naturalHeight,
-    0,
-    0,
-    image.naturalWidth,
-    image.naturalHeight
-  );
+    const rotateRads = rotate * (Math.PI / 180);
+    const centerX = image.naturalWidth / 2;
+    const centerY = image.naturalHeight / 2;
 
-  ctx.restore();
+    ctx.save();
+    ctx.translate(-cropX, -cropY);
+    ctx.translate(centerX, centerY);
+    ctx.rotate(rotateRads);
+    ctx.scale(scale, scale);
+    ctx.translate(-centerX, -centerY);
+
+    ctx.drawImage(
+      image,
+      0,
+      0,
+      image.naturalWidth,
+      image.naturalHeight,
+      0,
+      0,
+      image.naturalWidth,
+      image.naturalHeight,
+    );
+
+    ctx.restore();
+  }
 }
 
 const CropImage = () => {
@@ -87,18 +120,36 @@ const CropImage = () => {
   const imgRef = useRef<HTMLImageElement>(null);
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
 
-  const handleImageLoad = () => {
+  // When the image loads, compute an initial completedCrop in pixels so the
+  // "Crop" button is immediately enabled (user doesn't have to drag first).
+  const handleImageLoad = useCallback(() => {
     setError("");
-  };
+    const img = imgRef.current;
+    if (img && img.width > 0 && img.height > 0) {
+      setCompletedCrop({
+        unit: "px",
+        x: 0,
+        y: 0,
+        width: img.width,
+        height: img.height,
+      });
+    }
+  }, []);
 
   const handleImageError = () => {
     setError("Failed to load image. Please check the URL.");
-    console.error("[v0] Image failed to load from:", imageSrc);
+    console.error("[crop] Image failed to load from:", imageSrc);
   };
 
   const handleCrop = async () => {
     if (!completedCrop || !imgRef.current || !previewCanvasRef.current) {
       setError("Please select a crop area");
+      return;
+    }
+
+    // Guard against 0-dimension images (still loading, broken, or layout not ready)
+    if (imgRef.current.naturalWidth === 0 || imgRef.current.naturalHeight === 0) {
+      setError("Image not fully loaded. Please wait and try again.");
       return;
     }
 
@@ -111,33 +162,25 @@ const CropImage = () => {
         previewCanvasRef.current,
         completedCrop,
         scale,
-        rotation
+        rotation,
       );
 
-      const scaleFactor = 0.5;
-      const tempCanvas = document.createElement("canvas");
-      tempCanvas.width = previewCanvasRef.current.width * scaleFactor;
-      tempCanvas.height = previewCanvasRef.current.height * scaleFactor;
+      // Convert canvas directly to data URL — no intermediate temp canvas needed.
+      // The canvasPreview function already caps dimensions to a safe size.
+      const croppedImage = previewCanvasRef.current.toDataURL("image/jpeg", 0.85);
 
-      const ctx = tempCanvas.getContext("2d");
-      if (!ctx) throw new Error("Failed to get 2D context for temp canvas");
+      // Validate the output isn't an empty/black canvas
+      if (!croppedImage || croppedImage === "data:," || croppedImage.length < 100) {
+        throw new Error("Canvas produced an empty image — likely exceeded browser limits");
+      }
 
-      ctx.drawImage(
-        previewCanvasRef.current,
-        0,
-        0,
-        tempCanvas.width,
-        tempCanvas.height
-      );
-
-      const croppedImage = tempCanvas.toDataURL("image/jpeg", 0.7);
       setCroppedImage(croppedImage);
 
       setTimeout(() => {
         router.push(`/kiosk/edit?session=${sessionId}`);
       }, 100);
     } catch (e) {
-      console.error("[v0] Error cropping image:", e);
+      console.error("[crop] Error cropping image:", e);
       setError("Failed to crop image. Please try again.");
     } finally {
       setIsProcessing(false);

@@ -7,6 +7,7 @@ import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useCropStore } from "@/stores/crop-store";
+import { requestPrintWithImage } from "@/services/session";
 // import { StripeProvider } from "@/components/StripeProvider";
 // import {
 //   PaymentElement,
@@ -16,7 +17,6 @@ import { useCropStore } from "@/stores/crop-store";
 // import {
 //   confirmPaymentOnServer,
 //   createPaymentIntent,
-//   requestPrint,
 // } from "@/services/session";
 
 type FilterType = "original" | "warm" | "cool" | "pastel" | "mono" | "sepia";
@@ -29,6 +29,14 @@ const filterStyles: Record<FilterType, string> = {
   mono: "grayscale(100%)",
   sepia: "sepia(80%)",
 };
+
+// Kiosk location — set via env variable, e.g. NEXT_PUBLIC_KIOSK_LOCATION="Desert Botanical Garden"
+const KIOSK_LOCATION =
+  process.env.NEXT_PUBLIC_KIOSK_LOCATION || "Desert Botanical Garden";
+
+// Whether to use server-side CUPS printing (bypasses browser dialog)
+const USE_SERVER_PRINT =
+  process.env.NEXT_PUBLIC_USE_SERVER_PRINT === "true";
 
 export default function PaymentPage() {
   const searchParams = useSearchParams();
@@ -61,12 +69,70 @@ export default function PaymentPage() {
 
   const printImgRef = useRef<HTMLImageElement>(null);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [isPrinting, setIsPrinting] = useState(false);
+  const [printError, setPrintError] = useState("");
 
-  const handlePrint = useCallback(() => {
+  // ─── Helper: render the final image (with filters) onto a canvas and return as Blob ───
+  const renderFinalImageBlob = useCallback((): Promise<Blob> => {
+    return new Promise((resolve, reject) => {
+      const img = printImgRef.current;
+      if (!img || !img.complete || img.naturalWidth === 0) {
+        return reject(new Error("Image not ready"));
+      }
+
+      const canvas = document.createElement("canvas");
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return reject(new Error("No 2d context"));
+
+      // Apply the same CSS filters via canvas context
+      ctx.filter = combinedFilter || "none";
+      ctx.drawImage(img, 0, 0, img.naturalWidth, img.naturalHeight);
+
+      canvas.toBlob(
+        (blob) => {
+          if (blob) resolve(blob);
+          else reject(new Error("Failed to create image blob"));
+        },
+        "image/jpeg",
+        0.92,
+      );
+    });
+  }, [combinedFilter]);
+
+  // ─── Server-side CUPS printing (no dialog, auto-configured settings) ───
+  const handleServerPrint = useCallback(async () => {
+    setIsPrinting(true);
+    setPrintError("");
+    try {
+      const blob = await renderFinalImageBlob();
+      await requestPrintWithImage({ sessionId, imageBlob: blob });
+      // Print job submitted successfully — optionally navigate to a success page
+    } catch (err) {
+      console.error("Server print failed:", err);
+      setPrintError("Print failed. Please try again.");
+    } finally {
+      setIsPrinting(false);
+    }
+  }, [renderFinalImageBlob, sessionId]);
+
+  // ─── Browser print (improved: @page margin:0 suppresses URL/page number, custom date + location footer) ───
+  const handleBrowserPrint = useCallback(() => {
     const img = printImgRef.current;
     if (!img || !img.complete || img.naturalWidth === 0) return;
 
-    // Use a dedicated print window - single image, no headers/footers, no duplicate content
+    // Auto-populate date/time
+    const now = new Date();
+    const dateStr = now.toLocaleDateString("en-US", {
+      month: "numeric",
+      day: "numeric",
+      year: "2-digit",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+
     const printDoc = `
 <!DOCTYPE html>
 <html>
@@ -78,8 +144,6 @@ export default function PaymentPage() {
   html, body {
     width: 100%;
     height: 100%;
-    min-width: 4.25in;
-    min-height: 6in;
     overflow: hidden;
     background: white;
     position: relative;
@@ -88,7 +152,7 @@ export default function PaymentPage() {
   }
   .img-wrap {
     width: 100%;
-    height: 100%;
+    height: calc(100% - 14px);
     filter: ${combinedFilter || "none"};
     border: none;
   }
@@ -100,8 +164,21 @@ export default function PaymentPage() {
     border: none;
     outline: none;
   }
+  .print-footer {
+    position: absolute;
+    bottom: 1px;
+    left: 4px;
+    right: 4px;
+    font-size: 6.5pt;
+    font-family: Arial, Helvetica, sans-serif;
+    color: #888;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    line-height: 1;
+  }
   @page {
-    margin: 10px;
+    margin: 0;
     size: 4.25in 6in;
   }
   @media print {
@@ -112,12 +189,15 @@ export default function PaymentPage() {
 </head>
 <body>
 <div class="img-wrap"><img src="${img.src}" alt="Postcard" /></div>
+<div class="print-footer">
+  <span>${KIOSK_LOCATION}</span>
+  <span>${dateStr}</span>
+</div>
 </body>
 </html>`;
 
     const printWin = window.open("", "_blank");
     if (!printWin) {
-      // Fallback if popup blocked (e.g. some mobile)
       window.print();
       return;
     }
@@ -139,6 +219,15 @@ export default function PaymentPage() {
       printWin.onload = doPrint;
     }
   }, [combinedFilter]);
+
+  // ─── Main print handler: server print if enabled, otherwise browser print ───
+  const handlePrint = useCallback(() => {
+    if (USE_SERVER_PRINT) {
+      handleServerPrint();
+    } else {
+      handleBrowserPrint();
+    }
+  }, [handleServerPrint, handleBrowserPrint]);
 
   return (
     <>
@@ -266,14 +355,20 @@ export default function PaymentPage() {
               className="w-full rounded-full h-12 text-md font-bold max-w-[250px]"
               size="lg"
               onClick={handlePrint}
-              disabled={!imageLoaded}
+              disabled={!imageLoaded || isPrinting}
             >
-              {imageLoaded ? "Pay and Print" : "Loading image…"}
+              {isPrinting
+                ? "Printing…"
+                : imageLoaded
+                  ? "Pay and Print"
+                  : "Loading image…"}
             </Button>
 
-            <p className="text-xs text-[#71717A] mt-2 text-center max-w-[280px]">
-              Tip: In the print dialog, tap Options and turn off &quot;Headers and Footers&quot; for a clean print.
-            </p>
+            {printError && (
+              <p className="text-xs text-red-500 mt-2 text-center">
+                {printError}
+              </p>
+            )}
 
             {/* Back Button */}
             <Button
@@ -290,10 +385,12 @@ export default function PaymentPage() {
         {/* Print area: off-screen so image loads, only image at 4.25"x6" when printing */}
         <div ref={printRef} className="print-area">
           <div style={{ filter: combinedFilter, width: "100%", height: "100%" }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               ref={printImgRef}
               src={imageUrl}
               alt="Postcard"
+              crossOrigin="anonymous"
               onLoad={() => setImageLoaded(true)}
               style={{ width: "100%", height: "100%", objectFit: "cover" }}
             />

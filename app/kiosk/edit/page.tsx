@@ -143,6 +143,7 @@ export default function EditPage() {
                     style={{ filter: combinedFilter }}
                   >
                     <Image
+                      key={croppedImage ? "cropped" : "original"}
                       src={croppedImage || imageUrl}
                       alt="Photo preview"
                       fill

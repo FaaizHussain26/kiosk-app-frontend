@@ -71,4 +71,25 @@ export const requestPrint = async (sessionId: string): Promise<void> => {
   await api.post(`/session/${sessionId}/print`);
 };
 
+/**
+ * Send a rendered image (with filters baked in) to the backend for server-side
+ * CUPS printing. This bypasses the browser print dialog entirely, allowing the
+ * backend to auto-configure tray, media type, paper size, etc.
+ */
+export const requestPrintWithImage = async (params: {
+  sessionId: string;
+  imageBlob: Blob;
+}): Promise<{ message: string; status: string }> => {
+  const formData = new FormData();
+  formData.append("image", params.imageBlob, "postcard.jpg");
+
+  const { data } = await api.post<{ message: string; status: string }>(
+    `/session/${params.sessionId}/print`,
+    formData,
+    { headers: { "Content-Type": "multipart/form-data" } },
+  );
+
+  return data;
+};
+
 
