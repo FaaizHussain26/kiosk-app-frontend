@@ -118,27 +118,34 @@ export default function PaymentPage() {
     }
   }, [renderFinalImageBlob, sessionId]);
 
-  // ─── Browser print (improved: @page margin:0 suppresses URL/page number, custom date + location footer) ───
-  const handleBrowserPrint = useCallback(() => {
+  // ─── Browser print (renders filters into pixel data for cross-browser reliability) ───
+  const handleBrowserPrint = useCallback(async () => {
     const img = printImgRef.current;
     if (!img || !img.complete || img.naturalWidth === 0) return;
 
-    // Auto-populate date/time
-    const now = new Date();
-    const dateStr = now.toLocaleDateString("en-US", {
-      month: "numeric",
-      day: "numeric",
-      year: "2-digit",
-      hour: "numeric",
-      minute: "2-digit",
-    });
+    setIsPrinting(true);
 
-    const printDoc = `
+    try {
+      // Bake filters into the image pixels via canvas so the print doesn't
+      // depend on CSS filter support in the print renderer
+      const canvas = document.createElement("canvas");
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+
+      ctx.filter = combinedFilter || "none";
+      ctx.drawImage(img, 0, 0, img.naturalWidth, img.naturalHeight);
+
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.92);
+
+      // Blank title keeps the Safari/Chrome header cleaner
+      const printDoc = `
 <!DOCTYPE html>
 <html>
 <head>
 <meta charset="utf-8">
-<title>Print Postcard</title>
+<title> </title>
 <style>
   * { margin: 0; padding: 0; border: none; outline: none; box-sizing: border-box; }
   html, body {
@@ -146,77 +153,53 @@ export default function PaymentPage() {
     height: 100%;
     overflow: hidden;
     background: white;
-    position: relative;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
-  }
-  .img-wrap {
-    width: 100%;
-    height: calc(100% - 14px);
-    filter: ${combinedFilter || "none"};
-    border: none;
   }
   img {
     width: 100%;
     height: 100%;
     object-fit: contain;
     display: block;
-    border: none;
-    outline: none;
-  }
-  .print-footer {
-    position: absolute;
-    bottom: 1px;
-    left: 4px;
-    right: 4px;
-    font-size: 6.5pt;
-    font-family: Arial, Helvetica, sans-serif;
-    color: #888;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    line-height: 1;
   }
   @page {
     margin: 0;
     size: 4.25in 6in;
   }
   @media print {
-    html, body { margin: 0 !important; padding: 0 !important; border: none !important; }
-    .img-wrap, img { border: none !important; }
+    html, body { margin: 0 !important; padding: 0 !important; }
   }
 </style>
 </head>
 <body>
-<div class="img-wrap"><img src="${img.src}" alt="Postcard" /></div>
-<div class="print-footer">
-  <span>${KIOSK_LOCATION}</span>
-  <span>${dateStr}</span>
-</div>
+<img src="${dataUrl}" alt="Postcard" />
 </body>
 </html>`;
 
-    const printWin = window.open("", "_blank");
-    if (!printWin) {
-      window.print();
-      return;
-    }
-    printWin.document.write(printDoc);
-    printWin.document.close();
+      const printWin = window.open("", "_blank");
+      if (!printWin) {
+        window.print();
+        return;
+      }
+      printWin.document.write(printDoc);
+      printWin.document.close();
 
-    const doPrint = () => {
-      printWin.focus();
-      printWin.print();
-      printWin.onafterprint = () => printWin.close();
-    };
+      const doPrint = () => {
+        printWin.focus();
+        printWin.print();
+        printWin.onafterprint = () => printWin.close();
+      };
 
-    const printImg = printWin.document.querySelector("img");
-    if (printImg && (printImg as HTMLImageElement).complete) {
-      doPrint();
-    } else if (printImg) {
-      (printImg as HTMLImageElement).onload = doPrint;
-    } else {
-      printWin.onload = doPrint;
+      const printImg = printWin.document.querySelector("img");
+      if (printImg && (printImg as HTMLImageElement).complete) {
+        doPrint();
+      } else if (printImg) {
+        (printImg as HTMLImageElement).onload = doPrint;
+      } else {
+        printWin.onload = doPrint;
+      }
+    } finally {
+      setIsPrinting(false);
     }
   }, [combinedFilter]);
 
