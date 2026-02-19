@@ -189,7 +189,7 @@ export default function PaymentPage() {
     justify-content: space-between;
     align-items: center;
     padding-top: 10px;
-    font-size: 19pt;
+    font-size: 19px;
     font-family: Arial, Helvetica, sans-serif;
     color: #000;
     line-height: 1;
@@ -207,8 +207,8 @@ export default function PaymentPage() {
 <div class="postcard">
   <div class="image-area"><img src="${dataUrl}" alt="Postcard" /></div>
   <div class="info">
-    <span>${kioskLocation}</span>
-    <span>${dateStr}</span>
+    <span>test</span>
+    <span>123456</span>
   </div>
 </div>
 </body>
