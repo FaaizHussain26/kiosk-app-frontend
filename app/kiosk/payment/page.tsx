@@ -168,7 +168,7 @@ export default function PaymentPage() {
   .postcard {
     width: 100%;
     height: 100%;
-    padding: 0.5in;
+    padding: 50px;
     display: flex;
     flex-direction: column;
   }
