@@ -8,6 +8,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useCropStore } from "@/stores/crop-store";
 import { requestPrintWithImage } from "@/services/session";
+import { useKioskLocation } from "@/hooks/useKioskLocation";
 // import { StripeProvider } from "@/components/StripeProvider";
 // import {
 //   PaymentElement,
@@ -30,15 +31,14 @@ const filterStyles: Record<FilterType, string> = {
   sepia: "sepia(80%)",
 };
 
-// Kiosk location — set via env variable, e.g. NEXT_PUBLIC_KIOSK_LOCATION="Desert Botanical Garden"
-const KIOSK_LOCATION =
-  process.env.NEXT_PUBLIC_KIOSK_LOCATION || "Desert Botanical Garden";
-
 // Whether to use server-side CUPS printing (bypasses browser dialog)
 const USE_SERVER_PRINT =
   process.env.NEXT_PUBLIC_USE_SERVER_PRINT === "true";
 
 export default function PaymentPage() {
+  // Auto-detected location via GPS + reverse geocoding (cached per session)
+  const kioskLocation = useKioskLocation();
+
   const searchParams = useSearchParams();
   const router = useRouter();
   const sessionId = searchParams.get("session") || "";
@@ -188,10 +188,10 @@ export default function PaymentPage() {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding-top: 8px;
-    font-size: 9pt;
+    padding-top: 10px;
+    font-size: 19pt;
     font-family: Arial, Helvetica, sans-serif;
-    color: #555;
+    color: #000;
     line-height: 1;
   }
   @page {
@@ -207,7 +207,7 @@ export default function PaymentPage() {
 <div class="postcard">
   <div class="image-area"><img src="${dataUrl}" alt="Postcard" /></div>
   <div class="info">
-    <span>${KIOSK_LOCATION}</span>
+    <span>${kioskLocation}</span>
     <span>${dateStr}</span>
   </div>
 </div>
@@ -223,12 +223,26 @@ export default function PaymentPage() {
       printWin.document.close();
 
       const doPrint = () => {
-        printWin.focus();
-        printWin.print();
-        printWin.onafterprint = () => {
-          printWin.close();
+        let navigated = false;
+        const navigateHome = () => {
+          if (navigated) return;
+          navigated = true;
+          try { printWin.close(); } catch { /* ok */ }
           goHome();
         };
+
+        printWin.onafterprint = navigateHome;
+
+        const onFocus = () => {
+          window.removeEventListener("focus", onFocus);
+          setTimeout(navigateHome, 500);
+        };
+        window.addEventListener("focus", onFocus);
+
+        setTimeout(navigateHome, 60_000);
+
+        printWin.focus();
+        printWin.print();
       };
 
       const printImg = printWin.document.querySelector("img");
