@@ -168,7 +168,7 @@ export default function PaymentPage() {
   .postcard {
     width: 100%;
     height: 100%;
-    padding: 0.25in;
+    padding: 0.5in;
     display: flex;
     flex-direction: column;
   }
@@ -188,10 +188,10 @@ export default function PaymentPage() {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding-top: 5px;
-    font-size: 7pt;
+    padding-top: 8px;
+    font-size: 9pt;
     font-family: Arial, Helvetica, sans-serif;
-    color: #888;
+    color: #555;
     line-height: 1;
   }
   @page {
