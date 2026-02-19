@@ -131,9 +131,20 @@
   }
 }
 
+html {
+  overflow: hidden;
+  height: 100%;
+  overscroll-behavior: none;
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
   color: var(--text-primary);
   font-family: var(--font-national-park);
+  overflow: hidden;
+  height: 100%;
+  overscroll-behavior: none;
+  -webkit-touch-callout: none;
 }
 
 /* 

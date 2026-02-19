@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 
-const EVENTS = [
+const EVENTS: (keyof WindowEventMap)[] = [
   "mousedown",
   "mousemove",
   "keypress",
@@ -15,14 +15,10 @@ type UseIdleActivityOptions = {
 };
 
 /**
- * useIdleActivity
+ * Shows an "idle" modal after inactivity, then fires a callback if the user
+ * remains idle for an additional period.
  *
- * Shows an "idle" state after a period of inactivity, then triggers a callback
- * (e.g. navigate home) if the user stays idle while the modal is visible.
- *
- * Default timings:
- * - 90 seconds until the modal is shown
- * - 30 seconds after the modal before the callback runs
+ * Defaults: 90 s until modal, 30 s after modal until callback.
  */
 const useIdleActivity = (
   callback: () => void,
@@ -31,7 +27,11 @@ const useIdleActivity = (
   const [showModal, setShowModal] = useState(false);
 
   const lastActivityTime = useRef(Date.now());
-  const redirectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const redirectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+  const callbackRef = useRef(callback);
+  callbackRef.current = callback;
 
   const resetIdleTimer = useCallback(() => {
     lastActivityTime.current = Date.now();
@@ -42,19 +42,17 @@ const useIdleActivity = (
     setShowModal(false);
   }, []);
 
-  // Check for idle time and show modal / trigger callback
   useEffect(() => {
     const checkIdleTime = () => {
       const idleTime = Date.now() - lastActivityTime.current;
 
       if (!showModal && idleTime >= idleModalMs) {
         setShowModal(true);
-        console.log('Redirecting to home');
 
-        setTimeout(() => {
-          callback();
+        // Store the timeout ref so resetIdleTimer can cancel it
+        redirectTimeoutRef.current = setTimeout(() => {
+          callbackRef.current();
         }, redirectMs);
-        
       }
     };
 
@@ -63,26 +61,21 @@ const useIdleActivity = (
       clearInterval(interval);
       if (redirectTimeoutRef.current) {
         clearTimeout(redirectTimeoutRef.current);
+        redirectTimeoutRef.current = null;
       }
     };
-  }, [callback, idleModalMs, redirectMs, showModal]);
+  }, [idleModalMs, redirectMs, showModal]);
 
-  // Track user activity and reset timers
   useEffect(() => {
-    const handleActivity = () => {
-      resetIdleTimer();
-    };
+    const handleActivity = () => resetIdleTimer();
 
-    EVENTS.forEach((event) => {
-      window.addEventListener(event, handleActivity);
-    });
-
+    EVENTS.forEach((event) => window.addEventListener(event, handleActivity));
     return () => {
-      EVENTS.forEach((event) => {
-        window.removeEventListener(event, handleActivity);
-      });
+      EVENTS.forEach((event) =>
+        window.removeEventListener(event, handleActivity),
+      );
     };
-  }, []);
+  }, [resetIdleTimer]);
 
   return { showModal, resetIdleTimer };
 };

@@ -44,13 +44,11 @@ export default function PaymentPage() {
   const sessionId = searchParams.get("session") || "";
   const printRef = useRef<HTMLDivElement>(null);
 
-  // ✅ Get all values from Zustand store
-  const { croppedImage, brightness, selectedFilter } = useCropStore();
+  const { croppedImage, brightness, selectedFilter, resetAll } = useCropStore();
 
   const API_BASE_URL =
     process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
 
-  // Use cropped image if available, otherwise fallback to original
   const imageUrl = useMemo(() => {
     if (croppedImage) {
       return croppedImage;
@@ -60,7 +58,6 @@ export default function PaymentPage() {
       : "/photo-postcard-preview.jpg";
   }, [croppedImage, sessionId, API_BASE_URL]);
 
-  // ✅ Apply the same filters as edit page
   const combinedFilter = `brightness(${brightness}%) ${filterStyles[selectedFilter]}`;
 
   const handleBack = useCallback(() => {
@@ -71,6 +68,13 @@ export default function PaymentPage() {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [isPrinting, setIsPrinting] = useState(false);
   const [printError, setPrintError] = useState("");
+
+  // Navigate home and clean up session after a successful print
+  const goHome = useCallback(() => {
+    resetAll();
+    sessionStorage.removeItem("lastSessionId");
+    router.push("/");
+  }, [resetAll, router]);
 
   // ─── Helper: render the final image (with filters) onto a canvas and return as Blob ───
   const renderFinalImageBlob = useCallback((): Promise<Blob> => {
@@ -109,16 +113,16 @@ export default function PaymentPage() {
     try {
       const blob = await renderFinalImageBlob();
       await requestPrintWithImage({ sessionId, imageBlob: blob });
-      // Print job submitted successfully — optionally navigate to a success page
+      // Print job submitted — return to home screen
+      setTimeout(goHome, 1500);
     } catch (err) {
       console.error("Server print failed:", err);
       setPrintError("Print failed. Please try again.");
-    } finally {
       setIsPrinting(false);
     }
-  }, [renderFinalImageBlob, sessionId]);
+  }, [renderFinalImageBlob, sessionId, goHome]);
 
-  // ─── Browser print (renders filters into pixel data for cross-browser reliability) ───
+  // ─── Browser print (white border, location + date, baked filters) ───
   const handleBrowserPrint = useCallback(async () => {
     const img = printImgRef.current;
     if (!img || !img.complete || img.naturalWidth === 0) return;
@@ -126,8 +130,7 @@ export default function PaymentPage() {
     setIsPrinting(true);
 
     try {
-      // Bake filters into the image pixels via canvas so the print doesn't
-      // depend on CSS filter support in the print renderer
+      // Bake CSS filters directly into the pixel data
       const canvas = document.createElement("canvas");
       canvas.width = img.naturalWidth;
       canvas.height = img.naturalHeight;
@@ -139,7 +142,13 @@ export default function PaymentPage() {
 
       const dataUrl = canvas.toDataURL("image/jpeg", 0.92);
 
-      // Blank title keeps the Safari/Chrome header cleaner
+      // Long-form date, e.g. "February 18, 2026"
+      const dateStr = new Date().toLocaleDateString("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      });
+
       const printDoc = `
 <!DOCTYPE html>
 <html>
@@ -156,11 +165,34 @@ export default function PaymentPage() {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
-  img {
+  .postcard {
     width: 100%;
     height: 100%;
-    object-fit: contain;
+    padding: 0.25in;
+    display: flex;
+    flex-direction: column;
+  }
+  .image-area {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .image-area img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
     display: block;
+  }
+  .info {
+    flex-shrink: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 5px;
+    font-size: 7pt;
+    font-family: Arial, Helvetica, sans-serif;
+    color: #888;
+    line-height: 1;
   }
   @page {
     margin: 0;
@@ -172,7 +204,13 @@ export default function PaymentPage() {
 </style>
 </head>
 <body>
-<img src="${dataUrl}" alt="Postcard" />
+<div class="postcard">
+  <div class="image-area"><img src="${dataUrl}" alt="Postcard" /></div>
+  <div class="info">
+    <span>${KIOSK_LOCATION}</span>
+    <span>${dateStr}</span>
+  </div>
+</div>
 </body>
 </html>`;
 
@@ -187,7 +225,10 @@ export default function PaymentPage() {
       const doPrint = () => {
         printWin.focus();
         printWin.print();
-        printWin.onafterprint = () => printWin.close();
+        printWin.onafterprint = () => {
+          printWin.close();
+          goHome();
+        };
       };
 
       const printImg = printWin.document.querySelector("img");
@@ -201,7 +242,7 @@ export default function PaymentPage() {
     } finally {
       setIsPrinting(false);
     }
-  }, [combinedFilter]);
+  }, [combinedFilter, goHome]);
 
   // ─── Main print handler: server print if enabled, otherwise browser print ───
   const handlePrint = useCallback(() => {

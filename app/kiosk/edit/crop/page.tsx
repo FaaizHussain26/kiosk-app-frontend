@@ -10,10 +10,10 @@ import { ProgressSteps } from "@/components/global/progress-steps";
 import { useCropStore } from "@/stores/crop-store";
 import Image from "next/image";
 
-// Max canvas dimension to prevent exceeding browser limits on HiDPI displays.
-// Most browsers cap at ~16384px, but keeping conservative avoids silent failures
-// where toDataURL() returns an empty "data:," string (= black image).
-const MAX_CANVAS_DIM = 4096;
+// Cap canvas output to avoid exceeding browser limits on iPad/HiDPI displays.
+// iPad Safari caps at ~4096; keeping lower also reduces sessionStorage pressure
+// (base64 JPEG at 2048×2048 ≈ 300-500 KB, well within the 5 MB limit).
+const MAX_CANVAS_DIM = 2048;
 
 async function canvasPreview(
   image: HTMLImageElement,
@@ -167,7 +167,7 @@ const CropImage = () => {
 
       // Convert canvas directly to data URL — no intermediate temp canvas needed.
       // The canvasPreview function already caps dimensions to a safe size.
-      const croppedImage = previewCanvasRef.current.toDataURL("image/jpeg", 0.85);
+      const croppedImage = previewCanvasRef.current.toDataURL("image/jpeg", 0.75);
 
       // Validate the output isn't an empty/black canvas
       if (!croppedImage || croppedImage === "data:," || croppedImage.length < 100) {
@@ -203,76 +203,81 @@ const CropImage = () => {
   }
 
   return (
-    <div className="h-screen w-full flex flex-col overflow-hidden bg-pattern bg-background">
+    <div
+      className="h-screen w-full flex flex-col bg-pattern bg-background"
+      style={{ overflow: "hidden", touchAction: "none" }}
+    >
       {/* Header */}
       <ProgressSteps currentStep={3} />
 
-      <h2 className="text-center mt-5 text-5xl font-bold text-primary leading-tight">
+      <h2 className="text-center mt-3 text-4xl font-bold text-primary leading-tight shrink-0">
         Crop Photo
       </h2>
 
-      {/* Crop Area */}
-      <div className="w-[280px] mx-auto mt-6 flex justify-center items-center">
-        <ReactCrop
-          crop={crop}
-          onChange={(c) => setCrop(c)}
-          onComplete={(c) => setCompletedCrop(c)}
-          aspect={3 / 4}
-          className="max-w-full"
-        >
-          <img
-            ref={imgRef}
-            alt="Crop preview"
-            src={imageSrc}
-            onLoad={handleImageLoad}
-            onError={handleImageError}
-            crossOrigin="anonymous"
-            style={{
-              transform: `scale(${scale}) rotate(${rotation}deg)`,
-              maxWidth: "100%",
-              maxHeight: "50vh",
-              width: "auto",
-              height: "auto",
-              objectFit: "contain",
-            }}
-          />
-        </ReactCrop>
+      {/* Crop Area — flex-1 fills available space, data-allow-touch lets
+          the KioskShell touchmove handler pass through */}
+      <div
+        className="flex-1 min-h-0 flex justify-center items-center px-4"
+        data-allow-touch
+      >
+        <div className="w-[280px]">
+          <ReactCrop
+            crop={crop}
+            onChange={(c) => setCrop(c)}
+            onComplete={(c) => setCompletedCrop(c)}
+            aspect={3 / 4}
+            className="max-w-full"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              ref={imgRef}
+              alt="Crop preview"
+              src={imageSrc}
+              onLoad={handleImageLoad}
+              onError={handleImageError}
+              crossOrigin="anonymous"
+              style={{
+                transform: `scale(${scale}) rotate(${rotation}deg)`,
+                maxWidth: "100%",
+                maxHeight: "45vh",
+                width: "auto",
+                height: "auto",
+                objectFit: "contain",
+                touchAction: "none",
+              }}
+            />
+          </ReactCrop>
+        </div>
       </div>
 
       {/* Hidden canvas for processing */}
-      <canvas
-        ref={previewCanvasRef}
-        style={{
-          display: "none",
-        }}
-      />
+      <canvas ref={previewCanvasRef} style={{ display: "none" }} />
 
       {/* Error Message */}
       {error && (
-        <div className="text-center text-red-500 text-sm mt-2">{error}</div>
+        <div className="text-center text-red-500 text-sm mt-1 shrink-0">
+          {error}
+        </div>
       )}
 
-      {/* Controls Footer */}
-      <div className="container mx-auto px-6 py-6">
-        <div className="max-w-2xl mx-auto space-y-6">
-          {/* Action Buttons */}
-          <div className="flex gap-4 pt-2">
-            <Button
-              variant="outline"
-              className="flex-1 h-12 text-md font-bold rounded-full border-[E4E4E7] text-primary  hover:bg-gray-50 bg-white hover:text-none"
-              onClick={handleCancel}
-              disabled={isProcessing}
-            >
-              Cancel
-            </Button>
-            <Button
-              className="flex-1 h-12 text-md font-bold rounded-full"
-              onClick={handleCrop}
-              disabled={isProcessing || !completedCrop}
-            >
-              {isProcessing ? "Processing..." : "Crop"}
-            </Button>
-          </div>
+      {/* Action Buttons */}
+      <div className="shrink-0 px-6 py-4">
+        <div className="max-w-md mx-auto flex gap-4">
+          <Button
+            variant="outline"
+            className="flex-1 h-12 text-md font-bold rounded-full border-[E4E4E7] text-primary hover:bg-gray-50 bg-white hover:text-none"
+            onClick={handleCancel}
+            disabled={isProcessing}
+          >
+            Cancel
+          </Button>
+          <Button
+            className="flex-1 h-12 text-md font-bold rounded-full"
+            onClick={handleCrop}
+            disabled={isProcessing || !completedCrop}
+          >
+            {isProcessing ? "Processing..." : "Crop"}
+          </Button>
         </div>
       </div>
 

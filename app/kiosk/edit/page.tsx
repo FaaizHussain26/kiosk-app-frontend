@@ -79,7 +79,10 @@ export default function EditPage() {
   };
 
   return (
-    <div className="h-screen w-full flex flex-col overflow-hidden bg-pattern bg-background">
+    <div
+      className="h-screen w-full flex flex-col overflow-hidden bg-pattern bg-background"
+      style={{ touchAction: "none" }}
+    >
       <style jsx>{`
         .flip-card {
           perspective: 1000px;
@@ -243,8 +246,9 @@ export default function EditPage() {
               </div>
             </div>
 
-            {/* Brightness Section */}
-            <div className="mb-6">
+            {/* Brightness Section — data-allow-touch lets the KioskShell
+                touchmove handler pass through so the slider works on iPad */}
+            <div className="mb-6" data-allow-touch>
               <div className="flex items-center gap-2 mb-3">
                 <Image
                   src="/icons/brightness-icon.png"
