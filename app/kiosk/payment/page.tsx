@@ -189,8 +189,8 @@ export default function PaymentPage() {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding-top: 5px;
-    font-size: 12px;
+    padding-top: 35px;
+    font-size: 8px;
     font-family: Arial, Helvetica, sans-serif;
     color: #000;
     line-height: 1;
