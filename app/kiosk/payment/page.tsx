@@ -186,14 +186,12 @@ export default function PaymentPage() {
   }
   .info {
     flex-shrink: 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    text-align: right;
     padding-top: 35px;
     font-size: 8px;
     font-family: Arial, Helvetica, sans-serif;
     color: #000;
-    line-height: 1;
+    line-height: 1.4;
   }
   @page {
     margin: 0;
@@ -208,8 +206,8 @@ export default function PaymentPage() {
 <div class="postcard">
   <div class="image-area"><img src="${dataUrl}" alt="Postcard" /></div>
   <div class="info">
-    <span>${kioskLocation}</span>
-    <span>${dateStr}</span>
+    <div>${kioskLocation}</div>
+    <div>${dateStr}</div>
   </div>
 </div>
 </body>
