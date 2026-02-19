@@ -169,7 +169,7 @@ export default function PaymentPage() {
     width: 100%;
     height: 100%;
     padding: 50px;
-    padding-top: 80px;
+    padding-top: 70px;
     display: flex;
     flex-direction: column;
   }
@@ -187,7 +187,7 @@ export default function PaymentPage() {
   .info {
     flex-shrink: 0;
     text-align: right;
-    padding-top: 35px;
+    padding-top: 25px;
     font-size: 8px;
     font-family: Arial, Helvetica, sans-serif;
     color: #000;
