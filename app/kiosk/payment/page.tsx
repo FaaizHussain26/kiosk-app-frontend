@@ -244,14 +244,33 @@ export default function PaymentPage() {
     }
   }, [combinedFilter, goHome]);
 
-  // ─── Main print handler: server print if enabled, otherwise browser print ───
-  const handlePrint = useCallback(() => {
+  // ─── Exit fullscreen before printing (browsers block print dialog in fullscreen) ───
+  const exitFullscreen = useCallback(async () => {
+    const doc = document as Document & {
+      webkitFullscreenElement?: Element;
+      webkitExitFullscreen?: () => Promise<void>;
+    };
+    if (doc.fullscreenElement || doc.webkitFullscreenElement) {
+      try {
+        if (doc.exitFullscreen) await doc.exitFullscreen();
+        else if (doc.webkitExitFullscreen) await doc.webkitExitFullscreen();
+        // Small delay to let the browser finish exiting fullscreen
+        await new Promise((r) => setTimeout(r, 300));
+      } catch {
+        /* ignore — not critical */
+      }
+    }
+  }, []);
+
+  // ─── Main print handler: exit fullscreen first, then print ───
+  const handlePrint = useCallback(async () => {
+    await exitFullscreen();
     if (USE_SERVER_PRINT) {
       handleServerPrint();
     } else {
       handleBrowserPrint();
     }
-  }, [handleServerPrint, handleBrowserPrint]);
+  }, [exitFullscreen, handleServerPrint, handleBrowserPrint]);
 
   return (
     <>
