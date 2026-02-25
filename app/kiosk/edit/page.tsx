@@ -127,7 +127,7 @@ export default function EditPage() {
       <ProgressSteps currentStep={3} />
 
       {/* Main Content */}
-      <div className="w-full max-w-5xl mx-auto px-3 py-8">
+      <div className="w-full max-w-5xl mx-auto px-3 p-[15px]">
         <div className="flex flex-col lg:flex-row gap-8 items-start justify-center">
           {/* Postcard Preview */}
           <div className="w-[380px] mx-auto">

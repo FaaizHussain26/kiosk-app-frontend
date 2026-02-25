@@ -165,7 +165,7 @@ export default function MobileUploadPage() {
                   </li>
                   <li>
                     <span className="mr-1 font-black">•</span> Maximum file
-                    size: 10MB
+                    size: 50MB
                   </li>
                   <li>
                     <span className="mr-1 font-black">•</span> Best quality:

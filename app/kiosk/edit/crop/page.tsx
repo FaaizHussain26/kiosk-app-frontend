@@ -204,29 +204,31 @@ const CropImage = () => {
 
   return (
     <div
-      className="h-screen w-full flex flex-col bg-pattern bg-background"
+      className="fixed inset-0 w-full flex flex-col bg-pattern bg-background"
       style={{ overflow: "hidden", touchAction: "none" }}
     >
       {/* Header */}
-      <ProgressSteps currentStep={3} />
+      <div className="shrink-0">
+        <ProgressSteps currentStep={3} />
+      </div>
 
-      <h2 className="text-center mt-3 text-4xl font-bold text-primary leading-tight shrink-0">
+      <h2 className="text-center mt-1 text-3xl font-bold text-primary leading-tight shrink-0">
         Crop Photo
       </h2>
 
-      {/* Crop Area — flex-1 fills available space, data-allow-touch lets
-          the KioskShell touchmove handler pass through */}
+      {/* Crop Area — fixed height so buttons are always visible */}
       <div
-        className="flex-1 min-h-0 flex justify-center items-center px-4"
+        className="flex justify-center items-center px-4 overflow-hidden"
+        style={{ height: "55%" }}
         data-allow-touch
       >
-        <div className="w-[280px]">
+        <div className="w-[280px] h-full flex items-center justify-center">
           <ReactCrop
             crop={crop}
             onChange={(c) => setCrop(c)}
             onComplete={(c) => setCompletedCrop(c)}
             aspect={3 / 4}
-            className="max-w-full"
+            className="max-w-full max-h-full"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -239,7 +241,7 @@ const CropImage = () => {
               style={{
                 transform: `scale(${scale}) rotate(${rotation}deg)`,
                 maxWidth: "100%",
-                maxHeight: "45vh",
+                maxHeight: "100%",
                 width: "auto",
                 height: "auto",
                 objectFit: "contain",
@@ -255,13 +257,13 @@ const CropImage = () => {
 
       {/* Error Message */}
       {error && (
-        <div className="text-center text-red-500 text-sm mt-1 shrink-0">
+        <div className="text-center text-red-500 text-sm shrink-0">
           {error}
         </div>
       )}
 
       {/* Action Buttons */}
-      <div className="shrink-0 px-6 py-4">
+      <div className="shrink-0 px-6 py-3">
         <div className="max-w-md mx-auto flex gap-4">
           <Button
             variant="outline"
@@ -282,7 +284,9 @@ const CropImage = () => {
       </div>
 
       {/* Footer */}
-      <PostaFooter />
+      <div className="shrink-0">
+        <PostaFooter />
+      </div>
     </div>
   );
 };

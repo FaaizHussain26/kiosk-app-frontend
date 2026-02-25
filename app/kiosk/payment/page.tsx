@@ -37,7 +37,6 @@ const USE_SERVER_PRINT =
 
 export default function PaymentPage() {
   // Auto-detected location via GPS + reverse geocoding (cached per session)
-  const kioskLocation = useKioskLocation();
 
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -206,8 +205,8 @@ export default function PaymentPage() {
 <div class="postcard">
   <div class="image-area"><img src="${dataUrl}" alt="Postcard" /></div>
   <div class="info">
-    <div>${kioskLocation}</div>
-    <div>${dateStr}</div>
+    <div></div>
+    <div></div>
   </div>
 </div>
 </body>
@@ -405,6 +404,7 @@ export default function PaymentPage() {
                 <span className="text-primary text-3xl font-bold">$3.93</span>
               </div>
             </div>
+          <div className="flex flex-row items-center justify-center gap-4">
 
             {/* Print Button */}
             <Button
@@ -429,12 +429,13 @@ export default function PaymentPage() {
             {/* Back Button */}
             <Button
               variant="outline"
-              className="h-12 mt-4 border-[E4E4E7] text-primary hover:bg-gray-50 bg-white w-[120px] rounded-full text-md font-bold hover:text-none"
+              className="h-12 border-[E4E4E7] text-primary hover:bg-gray-50 bg-white w-[120px] rounded-full text-md font-bold hover:text-none"
               size="lg"
               onClick={handleBack}
             >
               Go Back
             </Button>
+          </div>
           </div>
         </div>
 
