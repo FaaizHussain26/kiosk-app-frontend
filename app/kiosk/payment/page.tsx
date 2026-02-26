@@ -9,6 +9,10 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import { useCropStore } from "@/stores/crop-store";
 import { requestPrintWithImage } from "@/services/session";
 import { useKioskLocation } from "@/hooks/useKioskLocation";
+import {
+  setKioskPrintMode,
+  exitFullscreen,
+} from "@/components/full-screen-manager";
 // import { StripeProvider } from "@/components/StripeProvider";
 // import {
 //   PaymentElement,
@@ -68,8 +72,9 @@ export default function PaymentPage() {
   const [isPrinting, setIsPrinting] = useState(false);
   const [printError, setPrintError] = useState("");
 
-  // Navigate home and clean up session after a successful print
+  // Navigate home, clean up session, and re-enable fullscreen
   const goHome = useCallback(() => {
+    setKioskPrintMode(false);
     resetAll();
     sessionStorage.removeItem("lastSessionId");
     router.push("/");
@@ -256,33 +261,20 @@ export default function PaymentPage() {
     }
   }, [combinedFilter, goHome]);
 
-  // ─── Exit fullscreen before printing (browsers block print dialog in fullscreen) ───
-  const exitFullscreen = useCallback(async () => {
-    const doc = document as Document & {
-      webkitFullscreenElement?: Element;
-      webkitExitFullscreen?: () => Promise<void>;
-    };
-    if (doc.fullscreenElement || doc.webkitFullscreenElement) {
-      try {
-        if (doc.exitFullscreen) await doc.exitFullscreen();
-        else if (doc.webkitExitFullscreen) await doc.webkitExitFullscreen();
-        // Small delay to let the browser finish exiting fullscreen
-        await new Promise((r) => setTimeout(r, 300));
-      } catch {
-        /* ignore — not critical */
-      }
-    }
-  }, []);
-
-  // ─── Main print handler: exit fullscreen first, then print ───
+  // ─── Main print handler: pause fullscreen, exit, print ───
   const handlePrint = useCallback(async () => {
+    // Tell the FullscreenManager to stop re-entering fullscreen
+    setKioskPrintMode(true);
     await exitFullscreen();
+    // Small delay to let the browser settle after exiting fullscreen
+    await new Promise((r) => setTimeout(r, 400));
+
     if (USE_SERVER_PRINT) {
       handleServerPrint();
     } else {
       handleBrowserPrint();
     }
-  }, [exitFullscreen, handleServerPrint, handleBrowserPrint]);
+  }, [handleServerPrint, handleBrowserPrint]);
 
   return (
     <>
