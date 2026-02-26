@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useCallback } from "react";
+import { useEffect } from "react";
 
 interface DocumentElementWithFullscreen extends HTMLElement {
   webkitRequestFullscreen?: () => Promise<void>;
@@ -13,9 +13,6 @@ interface FullscreenDocument extends Document {
 }
 
 // ─── Global print-mode flag ───────────────────────────────────────────────
-// While true the manager will NOT auto-re-enter fullscreen, giving the
-// browser room to show the print dialog.  The payment page sets this
-// before exiting fullscreen and clears it once printing is done.
 let _printMode = false;
 
 export function setKioskPrintMode(printing: boolean) {
@@ -29,16 +26,17 @@ function isInFullscreen(): boolean {
   return !!(doc.fullscreenElement || doc.webkitFullscreenElement);
 }
 
-async function requestFullscreen(): Promise<void> {
-  if (isInFullscreen()) return;
-
+async function requestFullscreen(): Promise<boolean> {
+  if (isInFullscreen()) return true;
   const elem = document.documentElement as DocumentElementWithFullscreen;
   try {
     if (elem.requestFullscreen) await elem.requestFullscreen();
     else if (elem.webkitRequestFullscreen) await elem.webkitRequestFullscreen();
     else if (elem.mozRequestFullScreen) await elem.mozRequestFullScreen();
+    else return false;
+    return true;
   } catch {
-    /* gesture required or API unavailable — silently ignore */
+    return false;
   }
 }
 
@@ -54,65 +52,80 @@ export async function exitFullscreen(): Promise<void> {
 }
 
 // ─── Component ────────────────────────────────────────────────────────────
-// Renders nothing — works entirely through side-effects.
 export function FullscreenManager() {
-  const enter = useCallback(async () => {
-    if (_printMode) return;
-    await requestFullscreen();
-  }, []);
-
   useEffect(() => {
-    // Skip on small phones (the mobile upload page shouldn't go fullscreen)
+    if (typeof navigator === "undefined") return;
+
+    // Skip on small phones
+    if (/iPhone|iPod/i.test(navigator.userAgent)) return;
+
+    // Already standalone (Add to Home Screen) — no API needed
     if (
-      typeof navigator !== "undefined" &&
-      /iPhone|iPod/i.test(navigator.userAgent)
+      window.matchMedia("(display-mode: standalone)").matches ||
+      ("standalone" in navigator &&
+        (navigator as unknown as { standalone: boolean }).standalone)
     )
       return;
 
-    // Already running as a standalone web-app (Add to Home Screen) — no need
-    if (
-      typeof window !== "undefined" &&
-      (window.matchMedia("(display-mode: standalone)").matches ||
-        ("standalone" in navigator &&
-          (navigator as unknown as { standalone: boolean }).standalone))
-    )
-      return;
+    // Track whether fullscreen was ever successfully entered.
+    // Once true, we stop listening on touch/click so gestures (crop, slider)
+    // are never stolen by a requestFullscreen() call.
+    let achieved = false;
 
-    // ── Enter fullscreen on every user gesture until it succeeds ──
-    // Browsers require a user gesture to enter fullscreen. By listening on
-    // every touch/click, the very first tap the user makes (e.g. "Start")
-    // will trigger fullscreen silently — no prompt needed.
-    const onInteraction = () => {
-      if (!isInFullscreen() && !_printMode) {
-        requestFullscreen();
+    // ── Phase 1: enter fullscreen on the first user gesture ──
+    // Removed immediately once fullscreen is confirmed.
+    const onFirstGesture = async () => {
+      if (_printMode || achieved) return;
+
+      const ok = await requestFullscreen();
+      if (ok && isInFullscreen()) {
+        achieved = true;
+        cleanup();
       }
     };
 
-    document.addEventListener("touchstart", onInteraction, { passive: true });
-    document.addEventListener("click", onInteraction);
+    const cleanup = () => {
+      document.removeEventListener("touchstart", onFirstGesture);
+      document.removeEventListener("click", onFirstGesture);
+    };
 
-    // ── Re-enter fullscreen when it's exited (unless printing) ──
+    document.addEventListener("touchstart", onFirstGesture, { passive: true });
+    document.addEventListener("click", onFirstGesture);
+
+    // ── Phase 2: re-enter if fullscreen is lost (except during printing) ──
     const onFullscreenChange = () => {
-      if (!isInFullscreen() && !_printMode) {
-        setTimeout(() => {
-          if (!_printMode) requestFullscreen();
-        }, 300);
+      if (isInFullscreen()) {
+        // Mark achieved in case it was entered externally
+        if (!achieved) {
+          achieved = true;
+          cleanup();
+        }
+        return;
       }
+
+      // Fullscreen was exited
+      if (_printMode) return;
+
+      // Re-enter after a very short delay
+      setTimeout(() => {
+        if (!_printMode && !isInFullscreen()) {
+          requestFullscreen();
+        }
+      }, 150);
     };
 
     document.addEventListener("fullscreenchange", onFullscreenChange);
     document.addEventListener("webkitfullscreenchange", onFullscreenChange);
 
     return () => {
-      document.removeEventListener("touchstart", onInteraction);
-      document.removeEventListener("click", onInteraction);
+      cleanup();
       document.removeEventListener("fullscreenchange", onFullscreenChange);
       document.removeEventListener(
         "webkitfullscreenchange",
         onFullscreenChange,
       );
     };
-  }, [enter]);
+  }, []);
 
   return null;
 }
