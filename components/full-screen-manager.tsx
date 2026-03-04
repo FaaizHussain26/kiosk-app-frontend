@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 interface DocumentElementWithFullscreen extends HTMLElement {
   webkitRequestFullscreen?: () => Promise<void>;
@@ -31,7 +31,8 @@ async function requestFullscreen(): Promise<boolean> {
   const elem = document.documentElement as DocumentElementWithFullscreen;
   try {
     if (elem.requestFullscreen) await elem.requestFullscreen();
-    else if (elem.webkitRequestFullscreen) await elem.webkitRequestFullscreen();
+    else if (elem.webkitRequestFullscreen)
+      await elem.webkitRequestFullscreen();
     else if (elem.mozRequestFullScreen) await elem.mozRequestFullScreen();
     else return false;
     return true;
@@ -51,62 +52,50 @@ export async function exitFullscreen(): Promise<void> {
   }
 }
 
+function isStandalone(): boolean {
+  if (typeof window === "undefined") return false;
+  return (
+    window.matchMedia("(display-mode: standalone)").matches ||
+    ("standalone" in navigator &&
+      (navigator as unknown as { standalone: boolean }).standalone)
+  );
+}
+
+function isMobilePhone(): boolean {
+  if (typeof navigator === "undefined") return false;
+  return /iPhone|iPod/i.test(navigator.userAgent);
+}
+
+function isMobileRoute(): boolean {
+  if (typeof window === "undefined") return false;
+  return window.location.pathname.startsWith("/mobile");
+}
+
 // ─── Component ────────────────────────────────────────────────────────────
 export function FullscreenManager() {
+  // Show a splash overlay until fullscreen is achieved (or skipped)
+  const [showSplash, setShowSplash] = useState(true);
+
   useEffect(() => {
-    if (typeof navigator === "undefined") return;
-
-    // Skip on small phones
-    if (/iPhone|iPod/i.test(navigator.userAgent)) return;
-
-    // Already standalone (Add to Home Screen) — no API needed
-    if (
-      window.matchMedia("(display-mode: standalone)").matches ||
-      ("standalone" in navigator &&
-        (navigator as unknown as { standalone: boolean }).standalone)
-    )
+    if (isMobilePhone() || isStandalone() || isMobileRoute()) {
+      setShowSplash(false);
       return;
+    }
 
-    // Track whether fullscreen was ever successfully entered.
-    // Once true, we stop listening on touch/click so gestures (crop, slider)
-    // are never stolen by a requestFullscreen() call.
-    let achieved = false;
-
-    // ── Phase 1: enter fullscreen on the first user gesture ──
-    // Removed immediately once fullscreen is confirmed.
-    const onFirstGesture = async () => {
-      if (_printMode || achieved) return;
-
-      const ok = await requestFullscreen();
+    // Try entering fullscreen immediately (works in some kiosk setups)
+    requestFullscreen().then((ok) => {
       if (ok && isInFullscreen()) {
-        achieved = true;
-        cleanup();
+        setShowSplash(false);
       }
-    };
+    });
 
-    const cleanup = () => {
-      document.removeEventListener("touchstart", onFirstGesture);
-      document.removeEventListener("click", onFirstGesture);
-    };
-
-    document.addEventListener("touchstart", onFirstGesture, { passive: true });
-    document.addEventListener("click", onFirstGesture);
-
-    // ── Phase 2: re-enter if fullscreen is lost (except during printing) ──
+    // ── Re-enter if fullscreen is lost (except during printing) ──
     const onFullscreenChange = () => {
       if (isInFullscreen()) {
-        // Mark achieved in case it was entered externally
-        if (!achieved) {
-          achieved = true;
-          cleanup();
-        }
+        setShowSplash(false);
         return;
       }
-
-      // Fullscreen was exited
       if (_printMode) return;
-
-      // Re-enter after a very short delay
       setTimeout(() => {
         if (!_printMode && !isInFullscreen()) {
           requestFullscreen();
@@ -118,7 +107,6 @@ export function FullscreenManager() {
     document.addEventListener("webkitfullscreenchange", onFullscreenChange);
 
     return () => {
-      cleanup();
       document.removeEventListener("fullscreenchange", onFullscreenChange);
       document.removeEventListener(
         "webkitfullscreenchange",
@@ -127,5 +115,32 @@ export function FullscreenManager() {
     };
   }, []);
 
-  return null;
+  // The splash tap handler — enters fullscreen on the first gesture
+  const handleSplashTap = async () => {
+    const ok = await requestFullscreen();
+    if (ok || !document.fullscreenEnabled) {
+      setShowSplash(false);
+    }
+  };
+
+  if (!showSplash) return null;
+
+  return (
+    <div
+      onClick={handleSplashTap}
+      onTouchStart={handleSplashTap}
+      className="fixed inset-0 z-[9999] bg-[#F3EEE7] flex flex-col items-center justify-center cursor-pointer select-none"
+      style={{ touchAction: "manipulation" }}
+    >
+      <h1
+        className="text-6xl font-bold text-[#2A3B26] mb-6"
+        style={{ fontFamily: "var(--font-national-park), sans-serif" }}
+      >
+        Posta
+      </h1>
+      <p className="text-[#52525B] text-lg animate-pulse">
+        Tap anywhere to start
+      </p>
+    </div>
+  );
 }

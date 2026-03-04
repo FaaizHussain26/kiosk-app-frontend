@@ -96,7 +96,7 @@ export default function ReviewPage() {
                     src={imageUrl}
                     alt="Photo preview"
                     fill
-                    className="object-cover"
+                    className="object-contain"
                     unoptimized
                     priority
                   />

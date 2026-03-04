@@ -126,7 +126,7 @@ export default function PaymentPage() {
     }
   }, [renderFinalImageBlob, sessionId, goHome]);
 
-  // ─── Browser print (white border, location + date, baked filters) ───
+  // ─── Browser print (white border, location + date, CSS filters) ───
   const handleBrowserPrint = useCallback(async () => {
     const img = printImgRef.current;
     if (!img || !img.complete || img.naturalWidth === 0) return;
@@ -134,17 +134,18 @@ export default function PaymentPage() {
     setIsPrinting(true);
 
     try {
-      // Bake CSS filters directly into the pixel data
+      // Convert image to a data URL so the print document is self-contained.
+      // Do NOT use ctx.filter here — Safari/WebKit doesn't support it.
+      // Filters are applied via CSS in the print HTML instead.
       const canvas = document.createElement("canvas");
       canvas.width = img.naturalWidth;
       canvas.height = img.naturalHeight;
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
 
-      ctx.filter = combinedFilter || "none";
       ctx.drawImage(img, 0, 0, img.naturalWidth, img.naturalHeight);
 
-      const dataUrl = canvas.toDataURL("image/jpeg", 0.92);
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.95);
 
       // Long-form date, e.g. "February 18, 2026"
       const dateStr = new Date().toLocaleDateString("en-US", {
@@ -181,11 +182,13 @@ export default function PaymentPage() {
     flex: 1;
     min-height: 0;
     overflow: hidden;
+    -webkit-filter: ${combinedFilter || "none"};
+    filter: ${combinedFilter || "none"};
   }
   .image-area img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
     display: block;
   }
   .info {
@@ -441,7 +444,7 @@ export default function PaymentPage() {
               alt="Postcard"
               crossOrigin="anonymous"
               onLoad={() => setImageLoaded(true)}
-              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              style={{ width: "100%", height: "100%", objectFit: "contain" }}
             />
           </div>
         </div>

@@ -5,7 +5,6 @@ import type React from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, CheckCircle2, Upload } from "lucide-react";
 import { useUploadSessionImage } from "@/hooks/useUploadSessionImage";
 import PostaMobileFooter from "@/components/mobile/posta-mobile-footer";
 import Image from "next/image";

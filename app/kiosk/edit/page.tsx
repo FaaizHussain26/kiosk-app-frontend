@@ -150,7 +150,7 @@ export default function EditPage() {
                       src={croppedImage || imageUrl}
                       alt="Photo preview"
                       fill
-                      className="object-cover"
+                      className="object-contain"
                       unoptimized
                       priority
                     />
