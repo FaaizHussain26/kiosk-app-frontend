@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useLayoutEffect } from "react";
 
 interface DocumentElementWithFullscreen extends HTMLElement {
   webkitRequestFullscreen?: () => Promise<void>;
@@ -19,7 +19,6 @@ export function setKioskPrintMode(printing: boolean) {
   _printMode = printing;
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────
 function isInFullscreen(): boolean {
   if (typeof document === "undefined") return false;
   const doc = document as FullscreenDocument;
@@ -52,95 +51,110 @@ export async function exitFullscreen(): Promise<void> {
   }
 }
 
-function isStandalone(): boolean {
-  if (typeof window === "undefined") return false;
-  return (
-    window.matchMedia("(display-mode: standalone)").matches ||
-    ("standalone" in navigator &&
-      (navigator as unknown as { standalone: boolean }).standalone)
-  );
-}
-
-function isMobilePhone(): boolean {
-  if (typeof navigator === "undefined") return false;
-  return /iPhone|iPod/i.test(navigator.userAgent);
-}
-
 function isMobileRoute(): boolean {
   if (typeof window === "undefined") return false;
   return window.location.pathname.startsWith("/mobile");
 }
 
-// ─── Component ────────────────────────────────────────────────────────────
+// ─── Component — renders nothing, runs before first paint ─────────────────
 export function FullscreenManager() {
-  // Show a splash overlay until fullscreen is achieved (or skipped)
-  const [showSplash, setShowSplash] = useState(true);
-
-  useEffect(() => {
-    if (isMobilePhone() || isStandalone() || isMobileRoute()) {
-      setShowSplash(false);
+  useLayoutEffect(() => {
+    if (typeof navigator === "undefined") return;
+    if (/iPhone|iPod/i.test(navigator.userAgent)) return;
+    if (isMobileRoute()) return;
+    if (
+      window.matchMedia("(display-mode: standalone)").matches ||
+      ("standalone" in navigator &&
+        (navigator as unknown as { standalone: boolean }).standalone)
+    )
       return;
-    }
 
-    // Try entering fullscreen immediately (works in some kiosk setups)
-    requestFullscreen().then((ok) => {
+    // ── Attempt fullscreen immediately (works in kiosk shells) ──
+    requestFullscreen();
+
+    // ── Enter fullscreen on first gesture ──
+    let achieved = false;
+
+    const onGesture = async () => {
+      if (_printMode || achieved) return;
+      const ok = await requestFullscreen();
       if (ok && isInFullscreen()) {
-        setShowSplash(false);
+        achieved = true;
+        document.removeEventListener("touchstart", onGesture);
+        document.removeEventListener("click", onGesture);
       }
-    });
+    };
 
-    // ── Re-enter if fullscreen is lost (except during printing) ──
-    const onFullscreenChange = () => {
+    document.addEventListener("touchstart", onGesture, { passive: true });
+    document.addEventListener("click", onGesture);
+
+    // ── Re-enter fullscreen when lost (unless printing) ──
+    const onFsChange = () => {
       if (isInFullscreen()) {
-        setShowSplash(false);
+        if (!achieved) {
+          achieved = true;
+          document.removeEventListener("touchstart", onGesture);
+          document.removeEventListener("click", onGesture);
+        }
         return;
       }
       if (_printMode) return;
       setTimeout(() => {
-        if (!_printMode && !isInFullscreen()) {
-          requestFullscreen();
-        }
+        if (!_printMode && !isInFullscreen()) requestFullscreen();
       }, 150);
     };
 
-    document.addEventListener("fullscreenchange", onFullscreenChange);
-    document.addEventListener("webkitfullscreenchange", onFullscreenChange);
+    document.addEventListener("fullscreenchange", onFsChange);
+    document.addEventListener("webkitfullscreenchange", onFsChange);
+
+    // ── Block every iOS gesture that can break fullscreen ──
+
+    // Prevent swipe-to-navigate and pull-to-refresh.
+    // Allow through touches on crop area, sliders, buttons.
+    const onTouchMove = (e: TouchEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (!t) return;
+      if (
+        t.closest("[data-allow-touch]") ||
+        t.closest(".ReactCrop") ||
+        t.closest("[data-slot='slider-thumb']")
+      )
+        return;
+      e.preventDefault();
+    };
+
+    // Prevent pinch-zoom (iPad two-finger gesture)
+    const onGestureStart = (e: Event) => e.preventDefault();
+    const onGestureChange = (e: Event) => e.preventDefault();
+
+    // Prevent double-tap zoom
+    let lastTap = 0;
+    const onTouchEnd = (e: TouchEvent) => {
+      const now = Date.now();
+      if (now - lastTap < 300) e.preventDefault();
+      lastTap = now;
+    };
+
+    document.addEventListener("touchmove", onTouchMove, { passive: false });
+    document.addEventListener("gesturestart", onGestureStart, {
+      passive: false,
+    });
+    document.addEventListener("gesturechange", onGestureChange, {
+      passive: false,
+    });
+    document.addEventListener("touchend", onTouchEnd, { passive: false });
 
     return () => {
-      document.removeEventListener("fullscreenchange", onFullscreenChange);
-      document.removeEventListener(
-        "webkitfullscreenchange",
-        onFullscreenChange,
-      );
+      document.removeEventListener("touchstart", onGesture);
+      document.removeEventListener("click", onGesture);
+      document.removeEventListener("fullscreenchange", onFsChange);
+      document.removeEventListener("webkitfullscreenchange", onFsChange);
+      document.removeEventListener("touchmove", onTouchMove);
+      document.removeEventListener("gesturestart", onGestureStart);
+      document.removeEventListener("gesturechange", onGestureChange);
+      document.removeEventListener("touchend", onTouchEnd);
     };
   }, []);
 
-  // The splash tap handler — enters fullscreen on the first gesture
-  const handleSplashTap = async () => {
-    const ok = await requestFullscreen();
-    if (ok || !document.fullscreenEnabled) {
-      setShowSplash(false);
-    }
-  };
-
-  if (!showSplash) return null;
-
-  return (
-    <div
-      onClick={handleSplashTap}
-      onTouchStart={handleSplashTap}
-      className="fixed inset-0 z-[9999] bg-[#F3EEE7] flex flex-col items-center justify-center cursor-pointer select-none"
-      style={{ touchAction: "manipulation" }}
-    >
-      <h1
-        className="text-6xl font-bold text-[#2A3B26] mb-6"
-        style={{ fontFamily: "var(--font-national-park), sans-serif" }}
-      >
-        Posta
-      </h1>
-      <p className="text-[#52525B] text-lg animate-pulse">
-        Tap anywhere to start
-      </p>
-    </div>
-  );
+  return null;
 }

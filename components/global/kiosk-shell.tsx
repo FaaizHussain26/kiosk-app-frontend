@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect } from "react";
+import { useCallback } from "react";
 import { useRouter } from "next/navigation";
 import useIdleActivity from "@/hooks/useIdleActivity";
 import { useCropStore } from "@/stores/crop-store";
@@ -19,28 +19,6 @@ export function KioskShell({ children }: { children: React.ReactNode }) {
     idleModalMs: 90_000,
     redirectMs: 30_000,
   });
-
-  // Prevent iOS scroll / bounce on kiosk pages.
-  // touch-action CSS alone is unreliable on iOS — preventing
-  // the default touchmove on the document is the proven fix.
-  useEffect(() => {
-    const prevent = (e: TouchEvent) => {
-      const target = e.target as HTMLElement | null;
-      if (!target) return;
-      // Allow touch on elements that explicitly need it (crop, slider thumb)
-      if (
-        target.closest("[data-allow-touch]") ||
-        target.closest("[data-slot='slider-thumb']") ||
-        target.closest(".ReactCrop")
-      ) {
-        return;
-      }
-      e.preventDefault();
-    };
-
-    document.addEventListener("touchmove", prevent, { passive: false });
-    return () => document.removeEventListener("touchmove", prevent);
-  }, []);
 
   return (
     <>

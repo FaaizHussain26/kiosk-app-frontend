@@ -1,0 +1,28 @@
+{
+  "name": "Posta",
+  "short_name": "Posta",
+  "description": "Upload your favorite photo, personalize & print!",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F3EEE7",
+  "theme_color": "#2A3B26",
+  "icons": [
+    {
+      "src": "/images/dbg-logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/images/dbg-logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/images/dbg-logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
