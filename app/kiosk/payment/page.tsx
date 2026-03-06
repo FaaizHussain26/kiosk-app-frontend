@@ -13,6 +13,7 @@ import {
   setKioskPrintMode,
   exitFullscreen,
 } from "@/components/full-screen-manager";
+import { drawFilteredImage } from "@/lib/canvas-filters";
 // import { StripeProvider } from "@/components/StripeProvider";
 // import {
 //   PaymentElement,
@@ -80,7 +81,7 @@ export default function PaymentPage() {
     router.push("/");
   }, [resetAll, router]);
 
-  // ─── Helper: render the final image (with filters) onto a canvas and return as Blob ───
+  // ─── Helper: render the final image (with filters baked into pixels) as Blob ───
   const renderFinalImageBlob = useCallback((): Promise<Blob> => {
     return new Promise((resolve, reject) => {
       const img = printImgRef.current;
@@ -89,15 +90,7 @@ export default function PaymentPage() {
       }
 
       const canvas = document.createElement("canvas");
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
-
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return reject(new Error("No 2d context"));
-
-      // Apply the same CSS filters via canvas context
-      ctx.filter = combinedFilter || "none";
-      ctx.drawImage(img, 0, 0, img.naturalWidth, img.naturalHeight);
+      drawFilteredImage(canvas, img, selectedFilter, brightness);
 
       canvas.toBlob(
         (blob) => {
@@ -105,10 +98,10 @@ export default function PaymentPage() {
           else reject(new Error("Failed to create image blob"));
         },
         "image/jpeg",
-        0.92,
+        0.95,
       );
     });
-  }, [combinedFilter]);
+  }, [selectedFilter, brightness]);
 
   // ─── Server-side CUPS printing (no dialog, auto-configured settings) ───
   const handleServerPrint = useCallback(async () => {
@@ -134,16 +127,11 @@ export default function PaymentPage() {
     setIsPrinting(true);
 
     try {
-      // Convert image to a data URL so the print document is self-contained.
-      // Do NOT use ctx.filter here — Safari/WebKit doesn't support it.
-      // Filters are applied via CSS in the print HTML instead.
+      // Bake filter + brightness into the pixel data so the print is
+      // guaranteed correct on Safari (which doesn't support ctx.filter
+      // OR CSS filter in its print engine).
       const canvas = document.createElement("canvas");
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
-
-      ctx.drawImage(img, 0, 0, img.naturalWidth, img.naturalHeight);
+      drawFilteredImage(canvas, img, selectedFilter, brightness);
 
       const dataUrl = canvas.toDataURL("image/jpeg", 0.95);
 
@@ -182,8 +170,6 @@ export default function PaymentPage() {
     flex: 1;
     min-height: 0;
     overflow: hidden;
-    -webkit-filter: ${combinedFilter || "none"};
-    filter: ${combinedFilter || "none"};
   }
   .image-area img {
     width: 100%;
@@ -262,7 +248,7 @@ export default function PaymentPage() {
     } finally {
       setIsPrinting(false);
     }
-  }, [combinedFilter, goHome]);
+  }, [selectedFilter, brightness, goHome]);
 
   // ─── Main print handler: pause fullscreen, exit, print ───
   const handlePrint = useCallback(async () => {
