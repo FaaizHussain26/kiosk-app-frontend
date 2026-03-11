@@ -138,8 +138,7 @@ export default function PaymentPage() {
           if (blob) resolve(blob);
           else reject(new Error("Failed to create image blob"));
         },
-        "image/jpeg",
-        0.98,
+        "image/png",
       );
     });
   }, [loadFullResImage, selectedFilter, brightness, needsFilter]);
@@ -172,7 +171,7 @@ export default function PaymentPage() {
       if (needsFilter) {
         const canvas = document.createElement("canvas");
         drawFilteredImage(canvas, img, selectedFilter, brightness);
-        dataUrl = canvas.toDataURL("image/jpeg", 0.98);
+        dataUrl = canvas.toDataURL("image/png");
       } else if (imageUrl.startsWith("data:")) {
         dataUrl = imageUrl;
       } else {
@@ -182,7 +181,7 @@ export default function PaymentPage() {
         const ctx = canvas.getContext("2d");
         if (!ctx) return;
         ctx.drawImage(img, 0, 0);
-        dataUrl = canvas.toDataURL("image/jpeg", 0.98);
+        dataUrl = canvas.toDataURL("image/png");
       }
 
       // Long-form date, e.g. "February 18, 2026"
