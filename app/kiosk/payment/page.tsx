@@ -46,7 +46,6 @@ export default function PaymentPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const sessionId = searchParams.get("session") || "";
-  const printRef = useRef<HTMLDivElement>(null);
 
   const { croppedImage, brightness, selectedFilter, resetAll } = useCropStore();
 
@@ -68,7 +67,6 @@ export default function PaymentPage() {
     router.push(`/kiosk/review?session=${sessionId}`);
   }, [router, sessionId]);
 
-  const printImgRef = useRef<HTMLImageElement>(null);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [isPrinting, setIsPrinting] = useState(false);
   const [printError, setPrintError] = useState("");
@@ -83,26 +81,58 @@ export default function PaymentPage() {
 
   const needsFilter = selectedFilter !== "original" || brightness !== 100;
 
-  // ─── Helper: render the final image (with filters baked into pixels) as Blob ───
-  const renderFinalImageBlob = useCallback((): Promise<Blob> => {
+  // ─── Load the image at FULL resolution (not limited by display size) ───
+  // Using fetch + createImageBitmap guarantees the full pixel data is decoded,
+  // unlike a hidden <img> which Safari can lazy-decode at display size.
+  const loadFullResImage = useCallback(async (): Promise<HTMLImageElement> => {
+    if (imageUrl.startsWith("data:")) {
+      // Data URL (cropped image) — load into an Image directly
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = () => reject(new Error("Failed to load cropped image"));
+        img.src = imageUrl;
+      });
+    }
+
+    // Cross-origin API image — fetch as blob to avoid CORS canvas tainting
+    // and ensure full-resolution decode
+    const res = await fetch(imageUrl, { mode: "cors" });
+    if (!res.ok) throw new Error(`Image fetch failed: ${res.status}`);
+    const blob = await res.blob();
+    const objectUrl = URL.createObjectURL(blob);
+
     return new Promise((resolve, reject) => {
-      const img = printImgRef.current;
-      if (!img || !img.complete || img.naturalWidth === 0) {
-        return reject(new Error("Image not ready"));
-      }
+      const img = new Image();
+      img.onload = () => {
+        URL.revokeObjectURL(objectUrl);
+        resolve(img);
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        reject(new Error("Failed to decode image"));
+      };
+      img.src = objectUrl;
+    });
+  }, [imageUrl]);
 
-      const canvas = document.createElement("canvas");
+  // ─── Helper: render the final image (with filters baked into pixels) as Blob ───
+  const renderFinalImageBlob = useCallback(async (): Promise<Blob> => {
+    const img = await loadFullResImage();
 
-      if (needsFilter) {
-        drawFilteredImage(canvas, img, selectedFilter, brightness);
-      } else {
-        canvas.width = img.naturalWidth;
-        canvas.height = img.naturalHeight;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return reject(new Error("No 2d context"));
-        ctx.drawImage(img, 0, 0);
-      }
+    const canvas = document.createElement("canvas");
 
+    if (needsFilter) {
+      drawFilteredImage(canvas, img, selectedFilter, brightness);
+    } else {
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) throw new Error("No 2d context");
+      ctx.drawImage(img, 0, 0);
+    }
+
+    return new Promise((resolve, reject) => {
       canvas.toBlob(
         (blob) => {
           if (blob) resolve(blob);
@@ -112,7 +142,7 @@ export default function PaymentPage() {
         0.98,
       );
     });
-  }, [selectedFilter, brightness, needsFilter]);
+  }, [loadFullResImage, selectedFilter, brightness, needsFilter]);
 
   // ─── Server-side CUPS printing (no dialog, auto-configured settings) ───
   const handleServerPrint = useCallback(async () => {
@@ -130,27 +160,22 @@ export default function PaymentPage() {
     }
   }, [renderFinalImageBlob, sessionId, goHome]);
 
-  // ─── Browser print (white border, location + date, CSS filters) ───
+  // ─── Browser print (white border, location + date, pixel-baked filters) ───
   const handleBrowserPrint = useCallback(async () => {
-    const img = printImgRef.current;
-    if (!img || !img.complete || img.naturalWidth === 0) return;
-
     setIsPrinting(true);
 
     try {
+      const img = await loadFullResImage();
+
       let dataUrl: string;
 
       if (needsFilter) {
-        // Bake filter + brightness into the pixel data (Safari doesn't
-        // support ctx.filter or CSS filter in its print engine)
         const canvas = document.createElement("canvas");
         drawFilteredImage(canvas, img, selectedFilter, brightness);
         dataUrl = canvas.toDataURL("image/jpeg", 0.98);
-      } else if (img.src.startsWith("data:")) {
-        // Already a data URL (e.g. cropped image) — use as-is, no re-encode
-        dataUrl = img.src;
+      } else if (imageUrl.startsWith("data:")) {
+        dataUrl = imageUrl;
       } else {
-        // Original API image — convert to data URL at max quality
         const canvas = document.createElement("canvas");
         canvas.width = img.naturalWidth;
         canvas.height = img.naturalHeight;
@@ -273,7 +298,7 @@ export default function PaymentPage() {
     } finally {
       setIsPrinting(false);
     }
-  }, [selectedFilter, brightness, needsFilter, goHome]);
+  }, [loadFullResImage, imageUrl, selectedFilter, brightness, needsFilter, goHome]);
 
   // ─── Main print handler: pause fullscreen, exit, print ───
   const handlePrint = useCallback(async () => {
@@ -292,71 +317,6 @@ export default function PaymentPage() {
 
   return (
     <>
-      <style jsx global>{`
-        /* Keep print area in DOM and rendered (invisible) so image loads */
-        .print-area {
-          position: fixed;
-          left: 0;
-          top: 0;
-          width: 408px;
-          height: 576px;
-          opacity: 0;
-          pointer-events: none;
-          z-index: -1;
-          overflow: hidden;
-        }
-        .print-area img {
-          width: 100%;
-          height: 100%;
-          object-fit: contain;
-          display: block;
-        }
-        @media print {
-          /* Single page, no headers/footers, exact postcard size */
-          html, body {
-            margin: 0 !important;
-            padding: 0 !important;
-            width: 4.25in !important;
-            height: 6in !important;
-            overflow: hidden !important;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-          }
-          body * {
-            visibility: hidden;
-          }
-          .print-area,
-          .print-area * {
-            visibility: visible !important;
-          }
-          .print-area {
-            position: fixed !important;
-            left: 0 !important;
-            top: 0 !important;
-            width: 4.25in !important;
-            height: 6in !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            z-index: 99999 !important;
-            background: white !important;
-            opacity: 1 !important;
-            page-break-after: avoid !important;
-            page-break-inside: avoid !important;
-          }
-          .print-area img {
-            width: 4.25in !important;
-            height: 6in !important;
-            max-width: 4.25in !important;
-            max-height: 6in !important;
-            object-fit: contain !important;
-          }
-          @page {
-            margin: 0;
-            size: 4.25in 6in;
-          }
-        }
-      `}</style>
-
       <div className="h-screen w-full flex flex-col overflow-hidden bg-pattern bg-background">
         {/* Progress Steps */}
         <ProgressSteps currentStep={5} />
@@ -445,20 +405,16 @@ export default function PaymentPage() {
           </div>
         </div>
 
-        {/* Print area: off-screen so image loads, only image at 4.25"x6" when printing */}
-        <div ref={printRef} className="print-area">
-          <div style={{ filter: combinedFilter, width: "100%", height: "100%" }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              ref={printImgRef}
-              src={imageUrl}
-              alt="Postcard"
-              crossOrigin="anonymous"
-              onLoad={() => setImageLoaded(true)}
-              style={{ width: "100%", height: "100%", objectFit: "contain" }}
-            />
-          </div>
-        </div>
+        {/* Hidden preload — just verifies the image is reachable.
+            Actual full-res loading happens in loadFullResImage() at print time. */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={imageUrl}
+          alt=""
+          crossOrigin="anonymous"
+          onLoad={() => setImageLoaded(true)}
+          style={{ position: "absolute", width: 0, height: 0, opacity: 0, pointerEvents: "none" }}
+        />
 
         {/* Footer */}
         <PostaFooter />
