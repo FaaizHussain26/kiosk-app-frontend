@@ -13,7 +13,7 @@ import Image from "next/image";
 // Cap canvas output to avoid exceeding browser limits on iPad/HiDPI displays.
 // iPad Safari caps at ~4096; keeping lower also reduces sessionStorage pressure
 // (base64 JPEG at 2048×2048 ≈ 300-500 KB, well within the 5 MB limit).
-const MAX_CANVAS_DIM = 3072;
+const MAX_CANVAS_DIM = 4096;
 
 async function canvasPreview(
   image: HTMLImageElement,
@@ -167,7 +167,7 @@ const CropImage = () => {
 
       // Convert canvas directly to data URL — no intermediate temp canvas needed.
       // The canvasPreview function already caps dimensions to a safe size.
-      const croppedImage = previewCanvasRef.current.toDataURL("image/jpeg", 0.92);
+      const croppedImage = previewCanvasRef.current.toDataURL("image/jpeg", 0.97);
 
       // Validate the output isn't an empty/black canvas
       if (!croppedImage || croppedImage === "data:," || croppedImage.length < 100) {

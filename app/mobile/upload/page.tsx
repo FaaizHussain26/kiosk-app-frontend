@@ -35,8 +35,8 @@ export default function MobileUploadPage() {
       return;
     }
 
-    if (file.size > 10 * 1024 * 1024) {
-      alert("File size must be less than 10MB");
+    if (file.size > 50 * 1024 * 1024) {
+      alert("File size must be less than 50MB");
       return;
     }
 

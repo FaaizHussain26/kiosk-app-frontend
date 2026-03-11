@@ -81,6 +81,8 @@ export default function PaymentPage() {
     router.push("/");
   }, [resetAll, router]);
 
+  const needsFilter = selectedFilter !== "original" || brightness !== 100;
+
   // ─── Helper: render the final image (with filters baked into pixels) as Blob ───
   const renderFinalImageBlob = useCallback((): Promise<Blob> => {
     return new Promise((resolve, reject) => {
@@ -90,7 +92,16 @@ export default function PaymentPage() {
       }
 
       const canvas = document.createElement("canvas");
-      drawFilteredImage(canvas, img, selectedFilter, brightness);
+
+      if (needsFilter) {
+        drawFilteredImage(canvas, img, selectedFilter, brightness);
+      } else {
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return reject(new Error("No 2d context"));
+        ctx.drawImage(img, 0, 0);
+      }
 
       canvas.toBlob(
         (blob) => {
@@ -98,10 +109,10 @@ export default function PaymentPage() {
           else reject(new Error("Failed to create image blob"));
         },
         "image/jpeg",
-        0.95,
+        0.98,
       );
     });
-  }, [selectedFilter, brightness]);
+  }, [selectedFilter, brightness, needsFilter]);
 
   // ─── Server-side CUPS printing (no dialog, auto-configured settings) ───
   const handleServerPrint = useCallback(async () => {
@@ -127,13 +138,27 @@ export default function PaymentPage() {
     setIsPrinting(true);
 
     try {
-      // Bake filter + brightness into the pixel data so the print is
-      // guaranteed correct on Safari (which doesn't support ctx.filter
-      // OR CSS filter in its print engine).
-      const canvas = document.createElement("canvas");
-      drawFilteredImage(canvas, img, selectedFilter, brightness);
+      let dataUrl: string;
 
-      const dataUrl = canvas.toDataURL("image/jpeg", 0.95);
+      if (needsFilter) {
+        // Bake filter + brightness into the pixel data (Safari doesn't
+        // support ctx.filter or CSS filter in its print engine)
+        const canvas = document.createElement("canvas");
+        drawFilteredImage(canvas, img, selectedFilter, brightness);
+        dataUrl = canvas.toDataURL("image/jpeg", 0.98);
+      } else if (img.src.startsWith("data:")) {
+        // Already a data URL (e.g. cropped image) — use as-is, no re-encode
+        dataUrl = img.src;
+      } else {
+        // Original API image — convert to data URL at max quality
+        const canvas = document.createElement("canvas");
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+        ctx.drawImage(img, 0, 0);
+        dataUrl = canvas.toDataURL("image/jpeg", 0.98);
+      }
 
       // Long-form date, e.g. "February 18, 2026"
       const dateStr = new Date().toLocaleDateString("en-US", {
@@ -248,7 +273,7 @@ export default function PaymentPage() {
     } finally {
       setIsPrinting(false);
     }
-  }, [selectedFilter, brightness, goHome]);
+  }, [selectedFilter, brightness, needsFilter, goHome]);
 
   // ─── Main print handler: pause fullscreen, exit, print ───
   const handlePrint = useCallback(async () => {
