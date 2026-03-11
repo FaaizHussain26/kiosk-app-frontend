@@ -88,7 +88,7 @@ export default function PaymentPage() {
     if (imageUrl.startsWith("data:")) {
       // Data URL (cropped image) — load into an Image directly
       return new Promise((resolve, reject) => {
-        const img = new Image();
+        const img = new window.Image();
         img.onload = () => resolve(img);
         img.onerror = () => reject(new Error("Failed to load cropped image"));
         img.src = imageUrl;
@@ -103,7 +103,7 @@ export default function PaymentPage() {
     const objectUrl = URL.createObjectURL(blob);
 
     return new Promise((resolve, reject) => {
-      const img = new Image();
+      const img = new window.Image();
       img.onload = () => {
         URL.revokeObjectURL(objectUrl);
         resolve(img);
