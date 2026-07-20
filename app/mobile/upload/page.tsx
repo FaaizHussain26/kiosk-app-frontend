@@ -92,9 +92,7 @@ export default function MobileUploadPage() {
             </p>
 
             <div className="mt-4 mb-8 flex items-center">
-              <p className="text-[#18181B] w-full max-w-[300px]">
-                Note: For best results, select a vertical photo.
-              </p>
+         
               <div className="w-[60px] h-[60px] ml-5 mr-8">
                 <Image
                   src="/icons/mobile-icon.png"
