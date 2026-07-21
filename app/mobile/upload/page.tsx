@@ -91,18 +91,7 @@ export default function MobileUploadPage() {
               Select a photo from your library to create your postcard.
             </p>
 
-            <div className="mt-4 mb-8 flex items-center">
-         
-              <div className="w-[60px] h-[60px] ml-5 mr-8">
-                <Image
-                  src="/icons/mobile-icon.png"
-                  alt="Mobile Icon"
-                  className="w-full h-full object-contain"
-                  width={75}
-                  height={75}
-                />
-              </div>
-            </div>
+            
 
             {/* Upload Area */}
             <div className="flex-1 max-w-sm w-full bg-card rounded-xl shadow-md border border-border p-6">
