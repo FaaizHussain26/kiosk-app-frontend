@@ -28,11 +28,6 @@ export const uploadSessionImage = async (params: {
   const { data } = await api.post<UploadImageResponse>(
     `/session/${params.sessionId}/image`,
     formData,
-    {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    },
   );
 
   return data;
@@ -86,7 +81,6 @@ export const requestPrintWithImage = async (params: {
   const { data } = await api.post<{ message: string; status: string }>(
     `/session/${params.sessionId}/print`,
     formData,
-    { headers: { "Content-Type": "multipart/form-data" } },
   );
 
   return data;
