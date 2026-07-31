@@ -25,6 +25,9 @@ export const uploadSessionImage = async (params: {
   const formData = new FormData();
   formData.append("image", params.file);
 
+  // Do not set Content-Type manually — the browser/axios must include the
+  // multipart boundary. Setting "multipart/form-data" alone causes busboy
+  // "Unexpected end of form" on the server.
   const { data } = await api.post<UploadImageResponse>(
     `/session/${params.sessionId}/image`,
     formData,
