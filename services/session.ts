@@ -25,12 +25,24 @@ export const uploadSessionImage = async (params: {
   const formData = new FormData();
   formData.append("image", params.file);
 
-  // Do not set Content-Type manually — the browser/axios must include the
-  // multipart boundary. Setting "multipart/form-data" alone causes busboy
-  // "Unexpected end of form" on the server.
+  // Do not set Content-Type — the browser must add the multipart boundary.
   const { data } = await api.post<UploadImageResponse>(
     `/session/${params.sessionId}/image`,
     formData,
+    {
+      maxBodyLength: Infinity,
+      maxContentLength: Infinity,
+      timeout: 120_000,
+      transformRequest: [
+        (payload, headers) => {
+          if (typeof FormData !== "undefined" && payload instanceof FormData) {
+            headers.delete?.("Content-Type");
+            delete (headers as Record<string, unknown>)["Content-Type"];
+          }
+          return payload;
+        },
+      ],
+    },
   );
 
   return data;
@@ -84,6 +96,20 @@ export const requestPrintWithImage = async (params: {
   const { data } = await api.post<{ message: string; status: string }>(
     `/session/${params.sessionId}/print`,
     formData,
+    {
+      maxBodyLength: Infinity,
+      maxContentLength: Infinity,
+      timeout: 120_000,
+      transformRequest: [
+        (payload, headers) => {
+          if (typeof FormData !== "undefined" && payload instanceof FormData) {
+            headers.delete?.("Content-Type");
+            delete (headers as Record<string, unknown>)["Content-Type"];
+          }
+          return payload;
+        },
+      ],
+    },
   );
 
   return data;

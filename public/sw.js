@@ -1,4 +1,4 @@
-const CACHE_NAME = "posta-cache-v1";
+const CACHE_NAME = "posta-cache-v2";
 const STATIC_ASSETS = ["/", "/offline.html"];
 
 self.addEventListener("install", (e) => {
@@ -20,10 +20,24 @@ self.addEventListener("activate", (e) => {
 });
 
 self.addEventListener("fetch", (e) => {
+  const { request } = e;
+
+  // Never intercept API calls or non-GET requests — re-fetching a POST/FormData
+  // request in a service worker can yield an empty/truncated body and cause
+  // multer/busboy "Unexpected end of form" on the backend.
+  if (request.method !== "GET") {
+    return;
+  }
+
+  const url = new URL(request.url);
+  if (url.origin !== self.location.origin) {
+    return;
+  }
+
   e.respondWith(
     caches
-      .match(e.request)
-      .then((cached) => cached || fetch(e.request))
+      .match(request)
+      .then((cached) => cached || fetch(request))
       .catch(() => caches.match("/offline.html"))
   );
 });
